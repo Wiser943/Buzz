@@ -16,15 +16,13 @@ async function register(input) {
   if (displayName.length < 1 || displayName.length > 60) throw new Error('Display name must be 1–60 characters.');
   if (password.length < 8) throw new Error('Password must be at least 8 characters.');
   const passwordHash = await bcrypt.hash(password, 12);
-  const adminEmails = (process.env.ADMIN_EMAILS || '').toLowerCase().split(',').map(x => x.trim()).filter(Boolean);
-  const user = await User.create({ username, displayName, email, passwordHash, role: adminEmails.includes(email) ? 'admin' : 'user' });
+  const user = await User.create({ username, displayName, email, passwordHash });
   return { token: tokenFor(user), user: publicUser(user) };
 }
 async function login(input) {
   const email = String(input.email || '').trim().toLowerCase();
   const user = await User.findOne({ email });
   if (!user || !(await bcrypt.compare(String(input.password || ''), user.passwordHash))) throw new Error('Email or password is incorrect.');
-  if ((user.status || 'active') !== 'active') throw new Error('Your account is suspended.');
   return { token: tokenFor(user), user: publicUser(user) };
 }
 module.exports = { register, login, publicUser, tokenFor };

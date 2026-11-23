@@ -41,14 +41,14 @@ function openPurchase(start = 0) {
   const pl = $('#plans'), dots = [...document.querySelectorAll('#dots i')], btn = $('#purBtn');
   const sync = () => { const i = Math.round(pl.scrollLeft / pl.clientWidth); dots.forEach((d, k) => d.classList.toggle('on', k === i)); btn.className = 'purchase ' + PLANS[i].c; };
   pl.onscroll = sync; pl.scrollLeft = start * pl.clientWidth; sync();
-  btn.onclick = async () => { if (!token()) return authOpen('login'); try { await api('/api/safety/verification-request', 'POST', { plan: PLANS[Math.round(pl.scrollLeft / pl.clientWidth)].c === 'green' ? 'creator' : 'athlete' }); closeSheets(); notify('Request sent. Payments are not connected; our team will review it.'); } catch (e) { notify(e.message); } };
+  btn.onclick = () => notify('Payments are not connected yet');
 }
 
 /* ---------- feed card ---------- */
 feedCard = function (p) {
   const a = p.author || {}, mine = myName(), liked = (p.likes || []).includes(localStorage.getItem('buzzerId'));
   const media = p.media?.length ? `<div class="post-media-grid" data-open="${p._id}">${p.media.map(s => p.mediaType === 'video' ? `<video src="${esc(s)}" controls preload="metadata"></video>` : `<img src="${esc(s)}" alt="" loading="lazy">`).join('')}</div>` : '';
-  return `<article class="feed-post dynamic-post"><div class="post-head"><div class="ph-av" data-user="${esc(a.username || '')}">${avatar(a)}</div><div class="ph-name"><b data-user="${esc(a.username || '')}">${esc(a.username || 'member')}${vb(a)}${a.username && a.username !== mine ? ` <button class="follow-link" data-follow="${esc(a.username)}">· Follow</button>` : ''}</b><small>${ago(p.createdAt)}</small></div><button class="more-btn" aria-label="More" data-post="${p._id}" data-author="${esc(a.username || '')}">${ico('ellipsis')}</button></div>${media}<div class="pill-row"><button class="pill like-post ${liked ? 'liked' : ''}" data-id="${p._id}">${ico('zap')}<span>${p.likes?.length || 0}</span></button><button class="pill cmt-btn" data-id="${p._id}">${ico('message-circle')}${p.commentsCount ? `<span>${p.commentsCount}</span>` : ''}</button><span class="grow"></span><button class="pill repost">${ico('repeat-2')}</button><button class="pill share-post" data-id="${p._id}">${ico('send')}</button></div>${p.text ? `<p class="post-text" data-open="${p._id}">${rich(p.text)}</p>` : ''}</article>`;
+  return `<article class="feed-post dynamic-post"><div class="post-head"><div class="ph-av" data-user="${esc(a.username || '')}">${avatar(a)}</div><div class="ph-name"><b data-user="${esc(a.username || '')}">${esc(a.username || 'member')}${vb(a)}${a.username && a.username !== mine ? ` <button class="follow-link" data-follow="${esc(a.username)}">· Follow</button>` : ''}</b><small>${ago(p.createdAt)}</small></div><button class="more-btn" aria-label="More">${ico('ellipsis')}</button></div>${media}<div class="pill-row"><button class="pill like-post ${liked ? 'liked' : ''}" data-id="${p._id}">${ico('zap')}<span>${p.likes?.length || 0}</span></button><button class="pill cmt-btn" data-id="${p._id}">${ico('message-circle')}${p.commentsCount ? `<span>${p.commentsCount}</span>` : ''}</button><span class="grow"></span><button class="pill repost">${ico('repeat-2')}</button><button class="pill share-post" data-id="${p._id}">${ico('send')}</button></div>${p.text ? `<p class="post-text" data-open="${p._id}">${rich(p.text)}</p>` : ''}</article>`;
 };
 const promo = () => `<div class="promo"><button class="promo-x" aria-label="Close">${ico('x')}</button><h3>STAND OUT AS AN ATHLETE</h3><p>Showcase your profile and get highlighted with special badge for athletes.</p><button class="promo-btn">${ico('person-standing')}AthletePro</button></div>`;
 async function toggleFollow(u, btn) {
@@ -123,9 +123,9 @@ screens.explore = {
   html() {
     const news = [['LATEST UPDATE', "Inside Buzzer's Latest Update (and Why It Changes How You Use the App)"], ['FOUR GROUPS, TWO THROUGH', 'How Does the CAF Confederation Cup Work?'], ['CLIMB TO THE FINAL', 'How Does the FIFA Intercontinental Cup Work?']];
     const head = (i, t) => `<div class="sec-head">${ico(i)}<b>${t}</b><button class="see-all">See All ${ico('chevron-right')}</button></div>`;
-    return `<div class="x-head"><h1>Explore</h1><button class="ads-btn" id="adsBtn">${ico('megaphone')}Ads</button></div><div class="search-pill">${ico('search')}<input id="exploreSearch" placeholder="Search"></div><div class="chip-row"><button class="chip" data-r="sports">${ico('trophy')}Sports</button><button class="chip" data-r="messages">${ico('message-circle')}Messages</button></div><section class="ex-sec">${head('newspaper', 'Explore News')}<div class="hscroll">${news.map(n => `<article class="news-card"><div class="nc-img">${ico('newspaper')}</div><div class="nc-body"><small>${n[0]}</small><b>${n[1]}</b></div></article>`).join('')}</div></section><section class="ex-sec">${head('ticket', 'Arena TV')}<div class="hscroll">${[['EQUUS TELEVISION LIVE 24/7', '24/7<br>EXCLUSIVELY & FREE<br>ON THE BUZZER APP'], ['National Day Cup 2026', 'NATIONAL DAY<br>CUP 2026']].map(c => `<div class="arena-big"><div class="ab-in"><strong>${c[1]}</strong><span class="watch">● Watch Live</span></div><div class="ab-t">${c[0]}</div><small>buzzer_fan_official</small></div>`).join('')}</div></section><section class="ex-sec">${head('clapperboard', 'Reels')}<div class="hscroll">${[1, 2, 3].map(() => `<div class="reel-tile">${ico('play')}</div>`).join('')}</div></section>`;
+    return `<div class="x-head"><h1>Explore</h1><button class="ads-btn" id="adsBtn">${ico('megaphone')}Ads</button></div><div class="search-pill">${ico('search')}<input id="exploreSearch" placeholder="Search"></div><section class="ex-sec">${head('newspaper', 'Explore News')}<div class="hscroll">${news.map(n => `<article class="news-card"><div class="nc-img">${ico('newspaper')}</div><div class="nc-body"><small>${n[0]}</small><b>${n[1]}</b></div></article>`).join('')}</div></section><section class="ex-sec">${head('ticket', 'Arena TV')}<div class="hscroll">${[['EQUUS TELEVISION LIVE 24/7', '24/7<br>EXCLUSIVELY & FREE<br>ON THE BUZZER APP'], ['National Day Cup 2026', 'NATIONAL DAY<br>CUP 2026']].map(c => `<div class="arena-big"><div class="ab-in"><strong>${c[1]}</strong><span class="watch">● Watch Live</span></div><div class="ab-t">${c[0]}</div><small>buzzer_fan_official</small></div>`).join('')}</div></section><section class="ex-sec">${head('clapperboard', 'Reels')}<div class="hscroll">${[1, 2, 3].map(() => `<div class="reel-tile">${ico('play')}</div>`).join('')}</div></section>`;
   },
-  wire() { document.querySelectorAll('.chip').forEach(b => b.onclick = () => render(b.dataset.r)); $('#adsBtn').onclick = () => notify('Ads manager is coming soon'); $('#exploreSearch').onkeydown = e => { if (e.key === 'Enter' && e.target.value.trim()) notify('Search is coming in a later stage'); }; document.querySelectorAll('.see-all').forEach(b => b.onclick = () => notify('Coming soon')); }
+  wire() { $('#adsBtn').onclick = () => notify('Ads manager is coming soon'); $('#exploreSearch').onkeydown = e => { if (e.key === 'Enter' && e.target.value.trim()) notify('Search is coming in a later stage'); }; document.querySelectorAll('.see-all').forEach(b => b.onclick = () => notify('Coming soon')); }
 };
 screens.create = {
   html() { return `<div class="sub-head"><button class="round bare" id="cClose">${ico('x')}</button><b>Create Post</b><button class="next" id="cNext">Post</button></div><div class="create-wrap"><div class="c-user">${avatar(meUser || { username: myName() }, 'md')}<b>${esc(myName())}</b></div><textarea id="cText" maxlength="5000" placeholder="What's on your mind?"></textarea><div class="c-grid" id="cGrid"></div><input type="file" id="cPick" multiple hidden><button class="outline-btn" id="cAdd">${ico('image-plus')}Choose photos or video</button><small class="muted" id="cHint">Photos: up to 4 · Video: Premium or Verified</small></div><div class="c-tabs"><button class="on" data-k="post">Post</button><button data-k="story">Story</button><button data-k="reel">Reel</button></div>`; },
@@ -149,12 +149,11 @@ screens.user = {
     $('#back').onclick = back;
     let d; try { const r = await fetch('/api/profile/' + encodeURIComponent(u), { headers: headers(false) }); d = await r.json(); if (!r.ok) throw 0; } catch { $('#uBody').innerHTML = '<div class="feed-empty">Profile not found.</div>'; return; }
     const us = d.user; let following = d.isFollowing, followers = d.stats.followers;
-    $('#uBody').innerHTML = `<div class="p-hero"><div class="av-wrap">${avatar(us, 'xl')}</div><div class="p-names"><h2>${esc(us.displayName)} ${vb(us)}</h2><p>@${esc(us.username)}</p></div></div><div class="p-stats"><span><b id="uUp">0</b> uploads</span><span><b id="uFo">${fmt(followers)}</b> followers</span><span><b>${fmt(d.stats.following)}</b> following</span></div><div class="karma-row">${ico('shield-half')}<span>Newbie • ${new Date(us.createdAt).getFullYear()} • ${us.karma || 0} Karma</span>${ico('chevron-right')}</div><button class="follow-wide" id="uFollow"></button><button class="follow-wide" id="uMsg">${ico('message-circle')}Message</button>${us.bio ? `<p class="u-bio">${esc(us.bio)}</p>` : ''}${pills()}<div id="profileFeed" class="dynamic-feed"></div>`;
-    $('#uMsg').onclick = () => token() ? render('chat', us.username) : authOpen('login');
+    $('#uBody').innerHTML = `<div class="p-hero"><div class="av-wrap">${avatar(us, 'xl')}</div><div class="p-names"><h2>${esc(us.displayName)} ${vb(us)}</h2><p>@${esc(us.username)}</p></div></div><div class="p-stats"><span><b id="uUp">0</b> uploads</span><span><b id="uFo">${fmt(followers)}</b> followers</span><span><b>${fmt(d.stats.following)}</b> following</span></div><div class="karma-row">${ico('shield-half')}<span>Newbie • ${new Date(us.createdAt).getFullYear()} • ${us.karma || 0} Karma</span>${ico('chevron-right')}</div><button class="follow-wide" id="uFollow"></button>${us.bio ? `<p class="u-bio">${esc(us.bio)}</p>` : ''}${pills()}<div id="profileFeed" class="dynamic-feed"></div>`;
     const fb = $('#uFollow'); fb.dataset.on = following ? '1' : '';
     const paintF = () => { fb.innerHTML = `${ico(following ? 'user-check' : 'user-plus')}${following ? 'Following' : 'Follow'}`; refreshIcons(); }; paintF();
     fb.onclick = async () => { const on = await toggleFollow(us.username, fb); followers += on === following ? 0 : on ? 1 : -1; following = on; $('#uFo').textContent = fmt(followers); paintF(); };
-    $('#uMenu').onclick = () => { sheet(`<div class="sh-group">${item('xShare', 'share', 'Share Profile')}${item('xFollow', following ? 'user-check' : 'user-plus', following ? 'Unfollow User' : 'Follow User')}</div><div class="sh-group">${item('xRep', 'user-x', 'Report User', 1)}${item('xRepP', 'user-x', 'Report Profile Picture', 1)}${item('xBlock', 'user-round-x', 'Block User', 1)}</div>`); $('#xShare').onclick = () => { closeSheets(); shareProfile(us.username); }; $('#xFollow').onclick = () => { closeSheets(); fb.click(); }; $('#xRep').onclick = () => reportSheet('user', us.username); $('#xRepP').onclick = () => reportSheet('profile_picture', us.username); $('#xBlock').onclick = () => blockUser(us.username); };
+    $('#uMenu').onclick = () => { sheet(`<div class="sh-group">${item('xShare', 'share', 'Share Profile')}${item('xFollow', following ? 'user-check' : 'user-plus', following ? 'Unfollow User' : 'Follow User')}</div><div class="sh-group">${item('xRep', 'user-x', 'Report User', 1)}${item('xRepP', 'user-x', 'Report Profile Picture', 1)}${item('xBlock', 'user-round-x', 'Block User', 1)}</div>`); $('#xShare').onclick = () => { closeSheets(); shareProfile(us.username); }; $('#xFollow').onclick = () => { closeSheets(); fb.click(); }; ['xRep', 'xRepP', 'xBlock'].forEach(i => $('#' + i).onclick = () => { closeSheets(); notify('Reporting and blocking are coming soon'); }); };
     const ps = await postsOf(us.username); if (currentView !== 'user') return; const t = $('#profileFeed'); t.innerHTML = ps.length ? ps.map(feedCard).join('') : '<div class="feed-empty">No posts yet.</div>'; $('#pillPosts').textContent = 'Posts - ' + ps.length; $('#uUp').textContent = ps.length; wireFeed(t); refreshIcons();
   }
 };
@@ -178,8 +177,8 @@ screens.post = {
 };
 
 /* ---------- router ---------- */
-const ROUTES = { home: '/', explore: '/explore', notifications: '/notifications', profile: '/profile', points: '/profile/points', profileEdit: '/profile/edit', settings: '/settings', create: '/create', sports: '/sports', messages: '/messages', admin: '/admin' };
-const PROTECTED = ['profile', 'points', 'profileEdit', 'create', 'messages', 'chat', 'admin'];
+const ROUTES = { home: '/', explore: '/explore', notifications: '/notifications', profile: '/profile', points: '/profile/points', profileEdit: '/profile/edit', settings: '/settings', create: '/create' };
+const PROTECTED = ['profile', 'points', 'profileEdit', 'create'];
 const _render = render; let popping = false;
 render = function (view, arg) {
   closeSheets();
@@ -189,17 +188,17 @@ render = function (view, arg) {
   if (S) { currentView = view; syncAuth(); window.scrollTo(0, 0); main.innerHTML = S.html(arg); document.querySelectorAll('.nav-item,.tab-item').forEach(b => b.classList.toggle('active', b.dataset.view === (view === 'points' || view === 'profileEdit' ? 'profile' : view))); refreshIcons(); S.wire && S.wire(arg); }
   else _render(view);
   document.body.dataset.view = view;
-  const path = view === 'user' ? '/u/' + encodeURIComponent(arg) : view === 'post' ? '/post/' + arg : view === 'chat' ? '/messages/' + encodeURIComponent(arg) : (ROUTES[view] || '/');
+  const path = view === 'user' ? '/u/' + encodeURIComponent(arg) : view === 'post' ? '/post/' + arg : (ROUTES[view] || '/');
   if (!popping) (location.pathname === path ? history.replaceState : history.pushState).call(history, {}, '', path);
 };
 function fromLocation() {
   const p = location.pathname.replace(/\/+$/, '') || '/'; let m; popping = true;
   try {
     if ((m = p.match(/^\/u\/([^/]+)$/))) render('user', decodeURIComponent(m[1]));
-    else if ((m = p.match(/^\/messages\/([^/]+)$/))) render('chat', decodeURIComponent(m[1]));
     else if ((m = p.match(/^\/post\/([a-f0-9]{24})$/i))) render('post', m[1]);
     else { const v = Object.keys(ROUTES).find(k => ROUTES[k] === p); if (!v) history.replaceState({}, '', '/'); render(v || 'home'); }
   } finally { popping = false; }
 }
 addEventListener('popstate', fromLocation);
 document.querySelector('a.brand')?.addEventListener('click', e => { e.preventDefault(); render('home'); });
+fromLocation();
