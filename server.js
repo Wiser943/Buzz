@@ -16,6 +16,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/profile', require('./routes/profile'));
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/ads', require('./routes/ads'));
+app.use('/api/uploads', require('./routes/uploads'));
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(err.status || 500).json({ error: 'Unexpected server error.' });

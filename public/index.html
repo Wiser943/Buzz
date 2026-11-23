@@ -6,22 +6,23 @@
   <meta name="theme-color" content="#101312" />
   <title>Buzzer — Sports community</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <button class="mobile-menu" id="mobileMenu" aria-label="Toggle navigation">☰</button>
+      <button class="mobile-menu" id="mobileMenu" aria-label="Toggle navigation"><i data-lucide="menu"></i></button>
       <a class="brand" href="#home" aria-label="Buzzer home"><span class="brand-mark">B</span><span>Buzzer</span></a>
-      <div class="top-search"><span>⌕</span><input id="search" placeholder="Explore" aria-label="Search" /></div>
-      <div class="top-actions"><button class="create-btn" id="createBtn">＋ Create</button><button class="auth-top-btn" id="authTopBtn">Join / Login</button><button class="icon-btn" title="Messages">▱</button><button class="icon-btn" title="Notifications">♧</button><button class="profile-mini" id="profileMini">S</button></div>
+      <div class="top-search"><i data-lucide="search"></i><input id="search" placeholder="Explore" aria-label="Search" /></div>
+      <div class="top-actions"><button class="create-btn" id="createBtn">＋ Create</button><button class="auth-top-btn" id="authTopBtn">Join / Login</button><button class="icon-btn" title="Messages"><i data-lucide="messages-square"></i></button><button class="icon-btn" title="Notifications"><i data-lucide="bell"></i></button><button class="profile-mini" id="profileMini">S</button></div>
     </header>
     <aside class="sidebar" id="sidebar">
       <nav class="nav-list">
-        <button class="nav-item active" data-view="home"><span>⌂</span> Home</button>
-        <button class="nav-item" data-view="explore"><span>◉</span> Explore</button>
-        <button class="nav-item" data-view="opportunities"><span>◎</span> Opportunities</button>
-        <button class="nav-item" data-view="news"><span>▤</span> News</button>
-        <button class="nav-item" data-view="games"><span>♧</span> Games</button>
+        <button class="nav-item active" data-view="home"><i data-lucide="house"></i> Home</button>
+        <button class="nav-item" data-view="explore"><i data-lucide="compass"></i> Explore</button>
+        <button class="nav-item" data-view="opportunities"><i data-lucide="target"></i> Opportunities</button>
+        <button class="nav-item" data-view="news"><i data-lucide="newspaper"></i> News</button>
+        <button class="nav-item" data-view="games"><i data-lucide="gamepad-2"></i> Games</button>
       </nav>
       <div class="sidebar-section"><div class="section-label">LATEST NEWS <span>⌃</span></div>
         <article class="side-news"><small>FOUR GROUPS, TWO THROUGH</small><strong>How Does the CAF Confederation Cup Work? 16...</strong></article>
