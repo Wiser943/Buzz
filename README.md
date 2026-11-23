@@ -70,3 +70,8 @@ Feed endpoints require a reachable MongoDB connection. This stage does not imple
 - Supported images: JPEG, PNG, WEBP, GIF. Supported video: MP4, WEBM, MOV.
 - Frontend post composer supports previews, up to four images, or one video, then uploads media before publishing the post.
 - Lucide icons are loaded from the CDN in `public/index.html`; the interface uses outline icons rather than emoji glyphs for core controls.
+
+## Stage 7 — ImgBB + SPA routes
+- Set `IMGBB_API_KEY` in your environment (Render dashboard). Post images, avatars and covers upload to ImgBB; without a key they fall back to local disk. Videos stay local (ImgBB is images only). Requires Node 18+.
+- SPA paths: `/`, `/explore`, `/notifications`, `/create`, `/profile`, `/profile/points`, `/profile/edit`, `/settings`, `/u/:username`, `/post/:id`.
+- New `GET /api/posts/:id`.

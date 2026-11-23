@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Follow = require('../models/Follow');
+const notify = require('./notify');
 
 const publicFields = 'username displayName avatarUrl coverUrl bio isVerified role karma subscription.plan subscription.status avatarSettings createdAt';
 async function getProfile(username) {
@@ -24,7 +25,7 @@ async function follow(followerId, username) {
   const target = await User.findOne({ username: String(username).toLowerCase() });
   if (!target) return { error: 'User not found', status: 404 };
   if (String(target._id) === String(followerId)) return { error: 'You cannot follow yourself.', status: 400 };
-  try { await Follow.create({ follower: followerId, following: target._id }); }
+  try { await Follow.create({ follower: followerId, following: target._id }); await notify(target._id, { type: 'follow', actor: followerId }); }
   catch (e) { if (e.code !== 11000) throw e; }
   return { ok: true, following: true };
 }

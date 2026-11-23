@@ -28,4 +28,16 @@ function fileFilter(allowVideo) {
 function createUpload({ allowVideo = false, maxBytes = 10 * 1024 * 1024 } = {}) {
   return multer({ storage, fileFilter: fileFilter(allowVideo), limits: { fileSize: maxBytes, files: 1 } }).single('file');
 }
-module.exports = { createUpload, imageTypes, videoTypes };
+// Images go to ImgBB when IMGBB_API_KEY is set (Node 18+ global fetch/FormData). Without a key they stay on local disk.
+async function hostImage(file) {
+  const key = process.env.IMGBB_API_KEY;
+  if (!key) { console.warn('IMGBB_API_KEY is not set: storing image locally (ephemeral on most hosts).'); return `/uploads/${file.filename}`; }
+  const form = new FormData();
+  form.append('image', (await fs.promises.readFile(file.path)).toString('base64'));
+  const r = await fetch('https://api.imgbb.com/1/upload?key=' + encodeURIComponent(key), { method: 'POST', body: form });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || !d?.data?.url) throw new Error(d?.error?.message || 'Image host rejected the upload.');
+  fs.promises.unlink(file.path).catch(() => {});
+  return d.data.display_url || d.data.url;
+}
+module.exports = { createUpload, imageTypes, videoTypes, hostImage };

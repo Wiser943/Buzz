@@ -3,16 +3,28 @@ const mongoose = require('mongoose');
 const Post = require('../models/Post');
 const Comment = require('../models/Comment');
 const auth = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
+const Block = require('../models/Block');
+const notify = require('../services/notify');
 
 const populateAuthor = { path: 'author', select: 'username displayName avatarUrl isVerified' };
 
-router.get('/', async (req, res, next) => {
+router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
     const query = { status: 'published', visibility: 'public' };
+    if (req.user) { const hidden = (await Block.find({ $or: [{ blocker: req.user._id }, { blocked: req.user._id }] })).map(b => String(b.blocker) === String(req.user._id) ? b.blocked : b.blocker); if (hidden.length) query.author = { $nin: hidden }; }
     if (req.query.before && mongoose.isValidObjectId(req.query.before)) query._id = { $lt: req.query.before };
     const posts = await Post.find(query).sort({ _id: -1 }).limit(limit).populate(populateAuthor);
     res.json({ posts, nextCursor: posts.length === limit ? posts[posts.length - 1]._id : null });
+  } catch (err) { next(err); }
+});
+router.get('/:id', async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Invalid post id.' });
+    const post = await Post.findById(req.params.id).populate(populateAuthor);
+    if (!post || post.status !== 'published') return res.status(404).json({ error: 'Post not found.' });
+    res.json({ post });
   } catch (err) { next(err); }
 });
 router.post('/', auth, async (req, res, next) => {
@@ -36,6 +48,7 @@ router.post('/:id/like', auth, async (req, res, next) => {
     const liked = post.likes.some(id => id.equals(req.user._id));
     if (liked) post.likes.pull(req.user._id); else post.likes.addToSet(req.user._id);
     await post.save();
+    if (!liked) await notify(post.author, { type: 'like', actor: req.user._id, post: post._id });
     res.json({ liked: !liked, likesCount: post.likes.length });
   } catch (err) { next(err); }
 });
@@ -55,6 +68,7 @@ router.post('/:id/comments', auth, async (req, res, next) => {
     const comment = await Comment.create({ post: post._id, author: req.user._id, text });
     post.commentsCount += 1;
     await post.save();
+    await notify(post.author, { type: 'comment', actor: req.user._id, post: post._id, text: text.slice(0, 80) });
     await comment.populate('author', 'username displayName avatarUrl isVerified');
     res.status(201).json({ comment, commentsCount: post.commentsCount });
   } catch (err) { next(err); }
