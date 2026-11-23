@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101312" />
+  <title>Buzzer — Sports community</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="mobile-menu" id="mobileMenu" aria-label="Toggle navigation">☰</button>
+      <a class="brand" href="#home" aria-label="Buzzer home"><span class="brand-mark">B</span><span>Buzzer</span></a>
+      <div class="top-search"><span>⌕</span><input id="search" placeholder="Explore" aria-label="Search" /></div>
+      <div class="top-actions"><button class="create-btn" id="createBtn">＋ Create</button><button class="auth-top-btn" id="authTopBtn">Join / Login</button><button class="icon-btn" title="Messages">▱</button><button class="icon-btn" title="Notifications">♧</button><button class="profile-mini" id="profileMini">S</button></div>
+    </header>
+    <aside class="sidebar" id="sidebar">
+      <nav class="nav-list">
+        <button class="nav-item active" data-view="home"><span>⌂</span> Home</button>
+        <button class="nav-item" data-view="explore"><span>◉</span> Explore</button>
+        <button class="nav-item" data-view="opportunities"><span>◎</span> Opportunities</button>
+        <button class="nav-item" data-view="news"><span>▤</span> News</button>
+        <button class="nav-item" data-view="games"><span>♧</span> Games</button>
+      </nav>
+      <div class="sidebar-section"><div class="section-label">LATEST NEWS <span>⌃</span></div>
+        <article class="side-news"><small>FOUR GROUPS, TWO THROUGH</small><strong>How Does the CAF Confederation Cup Work? 16...</strong></article>
+        <article class="side-news"><small>TALENT VERSUS CONDITIONS</small><strong>Why Do Some Football Academies Produce Stars...</strong></article>
+        <article class="side-news"><small>CLIMB TO THE FINAL</small><strong>How Does the FIFA Intercontinental Cup Work?...</strong></article>
+      </div>
+      <div class="side-ad"><div class="ad-copy">WHERE<br>SPORTS<br>LIVES</div><div class="ad-caption">Reach fans, athletes & clubs inside the sports network.</div><button>START ADVERTISING</button></div>
+    </aside>
+    <main id="main" class="main-content"></main>
+    <aside class="rightbar" id="rightbar"></aside>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
