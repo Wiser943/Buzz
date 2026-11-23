@@ -15,7 +15,7 @@ The frontend prototype remains in `public/`. Backend code is organized into `con
 ## API endpoints
 
 ### Auth
-- `POST /api/auth/register` — body: `{ username, displayName, email, password }`; username 3–24 chars, letters/numbers/underscore, password 8+ characters.
+- `POST /api/auth/register` — body: `{ username, displayName, email, password }`; username 4–24 chars, letters/numbers/underscore, password 8+ characters.
 - `POST /api/auth/login` — body: `{ email, password }`.
 - `GET /api/auth/me` — requires `Authorization: Bearer <token>`.
 

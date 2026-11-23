@@ -9,9 +9,9 @@ function tokenFor(user) { return jwt.sign({ sub: user._id.toString() }, process.
 async function register(input) {
   const username = normalizeUsername(input.username);
   const email = String(input.email || '').trim().toLowerCase();
-  const displayName = String(input.displayName || '').trim();
+  const displayName = (String(input.displayName || '').trim() || username).slice(0, 60);
   const password = String(input.password || '');
-  if (!validUsername(username)) throw new Error('Username must be 3–24 characters and use only letters, numbers or underscores.');
+  if (!validUsername(username)) throw new Error('Username must be 4–24 characters and use only letters, numbers or underscores.');
   if (!validEmail(email)) throw new Error('Enter a valid email address.');
   if (displayName.length < 1 || displayName.length > 60) throw new Error('Display name must be 1–60 characters.');
   if (password.length < 8) throw new Error('Password must be at least 8 characters.');
