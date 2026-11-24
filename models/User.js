@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   role: { type: String, enum: ['user', 'moderator', 'admin'], default: 'user' },
   karma: { type: Number, default: 0, min: 0 },
+  predPoints: { type: Number, default: 0, min: 0, index: true },
+  status: { type: String, enum: ['active', 'suspended', 'banned'], default: 'active' },
   subscription: {
     plan: { type: String, enum: ['free', 'premium'], default: 'free' },
     status: { type: String, enum: ['inactive', 'active', 'cancelled', 'past_due'], default: 'inactive' },

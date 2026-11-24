@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#000000" />
   <title>Buzzer — Sports community</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/styles.css?v=10" />
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
@@ -15,7 +15,7 @@
       <a class="brand" href="/" aria-label="Buzzer home"><span class="brand-mark">B</span><span>Buzzer</span></a>
       <div class="coin-pill" aria-hidden="true"><span class="coin">B</span><span class="coin-bar"><i></i></span></div>
       <div class="top-search"><i data-lucide="search"></i><input id="search" placeholder="Explore" aria-label="Search" /></div>
-      <div class="top-actions"><button class="icon-btn m-only" id="mSearch" title="Search"><i data-lucide="search"></i></button><button class="create-btn" id="createBtn">＋ Create</button><button class="auth-top-btn" id="authTopBtn">Join / Login</button><button class="icon-btn" title="Messages"><i data-lucide="messages-square"></i></button><button class="icon-btn desk-only" id="bellTop" title="Notifications"><i data-lucide="bell"></i></button><button class="profile-mini desk-only" id="profileMini">S</button></div>
+      <div class="top-actions"><button class="icon-btn m-only" id="mSearch" title="Search"><i data-lucide="search"></i></button><button class="create-btn" id="createBtn">＋ Create</button><button class="auth-top-btn" id="authTopBtn">Join / Login</button><button class="icon-btn" id="msgBtn" title="Messages"><i data-lucide="messages-square"></i></button><button class="icon-btn desk-only" id="bellTop" title="Notifications"><i data-lucide="bell"></i></button><button class="profile-mini desk-only" id="profileMini">S</button></div>
     </header>
     <aside class="sidebar" id="sidebar">
       <nav class="nav-list">
@@ -24,6 +24,9 @@
         <button class="nav-item" data-view="notifications"><i data-lucide="bell"></i> Notifications</button>
         <button class="nav-item" data-view="opportunities"><i data-lucide="target"></i> Opportunities</button>
         <button class="nav-item" data-view="news"><i data-lucide="newspaper"></i> News</button>
+        <button class="nav-item" data-view="sports"><i data-lucide="trophy"></i> Sports</button>
+        <button class="nav-item" data-view="messages"><i data-lucide="message-circle"></i> Messages</button>
+        <button class="nav-item" data-view="admin" id="adminNav" style="display:none"><i data-lucide="shield-check"></i> Admin</button>
         <button class="nav-item" data-view="games"><i data-lucide="gamepad-2"></i> Games</button>
       </nav>
       <div class="sidebar-section"><div class="section-label">LATEST NEWS <span>⌃</span></div>
@@ -44,7 +47,8 @@
     <button class="tab-item" data-view="profile" aria-label="Profile"><span class="tab-avatar">S</span></button>
   </nav>
   <div class="toast" id="toast" role="status"></div>
-  <script src="/app.js"></script>
-  <script src="/screens.js"></script>
+  <script src="/app.js?v=10"></script>
+  <script src="/screens.js?v=10"></script>
+  <script src="/stage9.js?v=10"></script>
 </body>
 </html>
