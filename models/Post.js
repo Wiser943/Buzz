@@ -11,6 +11,9 @@ const postSchema = new mongoose.Schema({
   isRepost: { type: Boolean, default: false },
   repostOf: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', default: null },
   repostsCount: { type: Number, default: 0 },
+  pinned: { type: Boolean, default: false },
+  threadRoot: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', default: null, index: true },
+  threadCount: { type: Number, default: 0 },
   community: { type: mongoose.Schema.Types.ObjectId, ref: 'Community', default: null, index: true }
 }, { timestamps: true });
 module.exports = mongoose.model('Post', postSchema);

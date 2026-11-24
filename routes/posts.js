@@ -6,6 +6,7 @@ const auth = require('../middleware/auth');
 const optionalAuth = require('../middleware/optionalAuth');
 const Block = require('../models/Block');
 const notify = require('../services/notify');
+const streak = require('../services/streak');
 const rateLimit = require('../middleware/rateLimit');
 const Membership = require('../models/Membership');
 const User = require('../models/User');
@@ -18,7 +19,7 @@ const visible = p => !p.isRepost || (p.repostOf && p.repostOf.status === 'publis
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
-    const query = { status: 'published', visibility: 'public' };
+    const query = { status: 'published', visibility: 'public', threadRoot: null };
     if (req.user) { const hidden = (await Block.find({ $or: [{ blocker: req.user._id }, { blocked: req.user._id }] })).map(b => String(b.blocker) === String(req.user._id) ? b.blocked : b.blocker); if (hidden.length) query.author = { $nin: hidden }; }
     if (req.query.before && mongoose.isValidObjectId(req.query.before)) query._id = { $lt: req.query.before };
     if (mongoose.isValidObjectId(req.query.community)) query.community = req.query.community;
@@ -36,7 +37,7 @@ router.get('/:id', async (req, res, next) => {
 });
 router.post('/', auth, rateLimit({ windowMs: 3600e3, max: 40, by: 'user', message: 'Posting limit reached. Try again later.' }), async (req, res, next) => {
   try {
-    const { text = '', media = [], mediaType = 'none', communityId } = req.body || {};
+    const { text = '', media = [], mediaType = 'none', communityId, threadOf } = req.body || {};
     const cleanText = typeof text === 'string' ? text.trim() : '';
     if (!cleanText && (!Array.isArray(media) || !media.length)) return res.status(400).json({ error: 'A post needs text or media.' });
     if (cleanText.length > 5000) return res.status(400).json({ error: 'Post text is too long.' });
@@ -46,7 +47,18 @@ router.post('/', auth, rateLimit({ windowMs: 3600e3, max: 40, by: 'user', messag
     const sc = scan(cleanText); if (sc.reject) return res.status(400).json({ error: 'Your post contains disallowed words.' });
     let community = null;
     if (communityId) { if (!mongoose.isValidObjectId(communityId) || !(await Membership.exists({ community: communityId, user: req.user._id }))) return res.status(403).json({ error: 'Join the community before posting in it.' }); community = communityId; }
-    const post = await Post.create({ author: req.user._id, text: cleanText, media, mediaType, community });
+    let root = null;
+    if (threadOf) {
+      if (!mongoose.isValidObjectId(threadOf)) return res.status(400).json({ error: 'Invalid thread.' });
+      root = await Post.findById(threadOf);
+      if (!root || root.status !== 'published' || root.isRepost || root.threadRoot) return res.status(404).json({ error: 'Thread not found.' });
+      if (!root.author.equals(req.user._id)) return res.status(403).json({ error: 'You can only add to your own thread.' });
+      if (root.threadCount >= 24) return res.status(400).json({ error: 'A thread can have up to 25 posts.' });
+      community = root.community;
+    }
+    const post = await Post.create({ author: req.user._id, text: cleanText, media, mediaType, community, threadRoot: root ? root._id : null });
+    if (root) await Post.updateOne({ _id: root._id }, { $inc: { threadCount: 1 } });
+    streak.touch(req.user._id);
     await autoReport({ targetType: 'post', targetUser: req.user._id, targetPost: post._id, flags: sc.flags });
     await post.populate(populateAuthor);
     res.status(201).json({ post });
@@ -63,10 +75,55 @@ router.post('/:id/like', auth, async (req, res, next) => {
     res.json({ liked: !liked, likesCount: post.likes.length });
   } catch (err) { next(err); }
 });
+router.get('/:id/thread', async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Invalid post id.' });
+    const p = await Post.findById(req.params.id).select('threadRoot status');
+    if (!p || p.status !== 'published') return res.status(404).json({ error: 'Post not found.' });
+    const rootId = p.threadRoot || p._id;
+    const root = await Post.findOne({ _id: rootId, status: 'published' }).populate(populateAuthor);
+    if (!root) return res.status(404).json({ error: 'Thread not found.' });
+    const parts = await Post.find({ threadRoot: rootId, status: 'published' }).sort({ _id: 1 }).limit(24).populate(populateAuthor);
+    res.json({ root, parts });
+  } catch (err) { next(err); }
+});
+router.get('/:id/likes', optionalAuth, async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Invalid post id.' });
+    const post = await Post.findById(req.params.id).populate({ path: 'likes', select: 'username displayName avatarUrl isVerified', options: { limit: 100 } });
+    if (!post || post.status !== 'published') return res.status(404).json({ error: 'Post not found.' });
+    res.json({ users: post.likes, total: post.likes.length });
+  } catch (err) { next(err); }
+});
+router.post('/:id/pin', auth, async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Invalid post id.' });
+    const post = await Post.findById(req.params.id);
+    if (!post || post.status !== 'published') return res.status(404).json({ error: 'Post not found.' });
+    if (!post.author.equals(req.user._id)) return res.status(403).json({ error: 'You can only pin your own posts.' });
+    if (!post.pinned && await Post.countDocuments({ author: req.user._id, pinned: true, status: 'published' }) >= 3) return res.status(400).json({ error: 'You can pin up to 3 posts. Unpin one first.' });
+    post.pinned = !post.pinned; await post.save();
+    res.json({ pinned: post.pinned });
+  } catch (err) { next(err); }
+});
+router.delete('/:id', auth, async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Invalid post id.' });
+    const post = await Post.findById(req.params.id);
+    if (!post || post.status === 'removed') return res.status(404).json({ error: 'Post not found.' });
+    if (!post.author.equals(req.user._id)) return res.status(403).json({ error: 'You can only delete your own posts.' });
+    post.status = 'removed'; post.pinned = false; await post.save();
+    if (post.threadCount > 0) await Post.updateMany({ threadRoot: post._id, status: 'published' }, { status: 'removed' });
+    if (post.threadRoot) await Post.updateOne({ _id: post.threadRoot, threadCount: { $gt: 0 } }, { $inc: { threadCount: -1 } });
+    if (post.isRepost && post.repostOf) await Post.updateOne({ _id: post.repostOf, repostsCount: { $gt: 0 } }, { $inc: { repostsCount: -1 } });
+    res.json({ deleted: true });
+  } catch (err) { next(err); }
+});
 router.post('/:id/repost', auth, rateLimit({ max: 30, by: 'user' }), async (req, res, next) => {
   try {
     const orig = await Post.findById(req.params.id);
     if (!orig || orig.status !== 'published' || orig.isRepost) return res.status(404).json({ error: 'Post not found.' });
+    if (orig.author.equals(req.user._id)) return res.status(400).json({ error: 'You cannot repost your own post.' });
     const mine = await Post.findOne({ author: req.user._id, repostOf: orig._id, status: 'published' });
     if (mine) { mine.status = 'removed'; await mine.save(); await Post.updateOne({ _id: orig._id, repostsCount: { $gt: 0 } }, { $inc: { repostsCount: -1 } }); return res.json({ reposted: false, repostsCount: Math.max(0, orig.repostsCount - 1) }); }
     await Post.create({ author: req.user._id, repostOf: orig._id, isRepost: true, text: '' });
@@ -94,6 +151,7 @@ router.post('/:id/comments', auth, rateLimit({ windowMs: 600e3, max: 40, by: 'us
     const comment = await Comment.create({ post: post._id, author: req.user._id, text });
     post.commentsCount += 1;
     await post.save();
+    streak.touch(req.user._id);
     await notify(post.author, { type: 'comment', actor: req.user._id, post: post._id, text: text.slice(0, 80) });
     await comment.populate('author', 'username displayName avatarUrl isVerified');
     res.status(201).json({ comment, commentsCount: post.commentsCount });

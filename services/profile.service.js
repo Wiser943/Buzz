@@ -1,8 +1,9 @@
 const User = require('../models/User');
 const Follow = require('../models/Follow');
 const notify = require('./notify');
+const { view: streakView } = require('./streak');
 
-const publicFields = 'username displayName avatarUrl coverUrl bio isVerified role karma subscription.plan subscription.status avatarSettings createdAt';
+const publicFields = 'username displayName avatarUrl coverUrl bio isVerified role karma subscription.plan subscription.status avatarSettings createdAt streak';
 async function getProfile(username) {
   const user = await User.findOne({ username: String(username).toLowerCase() }).select(publicFields);
   if (!user) return null;
@@ -10,7 +11,7 @@ async function getProfile(username) {
     Follow.countDocuments({ following: user._id }),
     Follow.countDocuments({ follower: user._id })
   ]);
-  return { user, stats: { followers, following } };
+  return { user: { ...user.toObject(), streak: streakView(user.streak) }, stats: { followers, following } };
 }
 async function updateProfile(userId, data) {
   const allowed = ['displayName', 'bio', 'avatarUrl', 'coverUrl', 'avatarSettings'];

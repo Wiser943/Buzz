@@ -34,10 +34,45 @@ async function blockUser(username) {
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('.more-btn[data-post]'); if (!b) return;
-  e.stopPropagation(); if (b.dataset.author === myName()) return notify('This is your post');
+  e.stopPropagation(); if (b.dataset.author === myName()) return ownPostSheet(b.dataset.post);
   sheet(`<div class="sh-group">${item('mpRep', 'flag', 'Report post', 1)}${item('mpBlk', 'user-round-x', 'Block @' + esc(b.dataset.author), 1)}</div>`);
   $('#mpRep').onclick = () => reportSheet('post', b.dataset.author, b.dataset.post); $('#mpBlk').onclick = () => blockUser(b.dataset.author);
 }, true);
+
+
+/* own-post menu: share, story, reactions, comments, pin, translate, delete */
+async function ownPostSheet(id) {
+  let post; try { post = (await api('/api/posts/' + id)).post; } catch (e) { return notify(e.message); }
+  const url = location.origin + '/post/' + id;
+  sheet(`<div class="sh-pair"><button id="opChat" class="sh-tile">${ico('forward')}<small>Share Post in Chat</small></button><button id="opShare" class="sh-tile">${ico('share-2')}<small>Share</small></button></div><div class="sh-group">${item('opStory', 'circle-fading-plus', 'Add to your story')}${item('opLikes', 'heart', 'View Reactions')}${item('opCmts', 'message-circle', 'View Comments')}${item('opPin', 'pin', post.pinned ? 'Unpin from main grid' : 'Pin to main grid')}${item('opTr', 'languages', 'Translate Description')}</div><div class="sh-group">${item('opDel', 'trash-2', 'Delete Post', 1)}</div>`);
+  $('#opShare').onclick = () => { closeSheets(); navigator.share ? navigator.share({ url }).catch(() => {}) : navigator.clipboard?.writeText(url).then(() => notify('Link copied')); };
+  $('#opCmts').onclick = () => render('post', id);
+  $('#opChat').onclick = async () => {
+    try {
+      const { users } = await api('/api/messages/contacts');
+      if (!users.length) return notify('Follow each other first to message people');
+      sheet(`<h3 class="sh-title">Send to</h3>${users.map(u => `<button class="ct" data-u="${esc(u.username)}">${userAv(u, 'sm')}<span><b>${esc(u.displayName || u.username)}</b><small>@${esc(u.username)}</small></span></button>`).join('')}`);
+      document.querySelectorAll('.ct[data-u]').forEach(c => c.onclick = async () => { try { await api('/api/messages/with/' + encodeURIComponent(c.dataset.u), 'POST', { text: url }); closeSheets(); notify('Sent'); } catch (e) { notify(e.message); } });
+    } catch (e) { notify(e.message); }
+  };
+  $('#opStory').onclick = async () => {
+    if (!post.media?.length || !['image', 'video'].includes(post.mediaType)) return notify('Only posts with a photo or video can be added to your story');
+    try { await api('/api/stories', 'POST', { mediaUrl: post.media[0], mediaType: post.mediaType, text: (post.text || '').slice(0, 200) }); closeSheets(); notify('Added to your story for 24 hours'); } catch (e) { notify(e.message); }
+  };
+  $('#opLikes').onclick = async () => {
+    try {
+      const { users, total } = await api(`/api/posts/${id}/likes`);
+      sheet(`<h3 class="sh-title">Reactions · ${total}</h3>${users.length ? users.map(u => `<button class="ct" data-u="${esc(u.username)}">${userAv(u, 'sm')}<span><b>${esc(u.displayName || u.username)}</b><small>@${esc(u.username)}</small></span></button>`).join('') : '<p class="muted pad2">No reactions yet.</p>'}`);
+      document.querySelectorAll('.ct[data-u]').forEach(c => c.onclick = () => render('user', c.dataset.u));
+    } catch (e) { notify(e.message); }
+  };
+  $('#opPin').onclick = async () => { try { const d = await api(`/api/posts/${id}/pin`, 'POST'); closeSheets(); notify(d.pinned ? 'Pinned to your profile' : 'Unpinned'); if (currentView === 'profile') render('profile'); } catch (e) { notify(e.message); } };
+  $('#opTr').onclick = () => { if (!(post.text || '').trim()) return notify('This post has no description to translate'); closeSheets(); window.open('https://translate.google.com/?sl=auto&tl=en&op=translate&text=' + encodeURIComponent(post.text.slice(0, 1500)), '_blank', 'noopener'); };
+  $('#opDel').onclick = async () => {
+    if (!confirm('Delete this post? This cannot be undone.')) return;
+    try { await api('/api/posts/' + id, 'DELETE'); closeSheets(); notify('Post deleted'); if (currentView === 'post') return render('profile'); document.querySelectorAll(`[data-post="${id}"]`).forEach(x => x.closest('article')?.remove()); } catch (e) { notify(e.message); }
+  };
+}
 
 /* ---------- Sports ---------- */
 screens.sports = {

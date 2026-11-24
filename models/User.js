@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
     status: { type: String, enum: ['inactive', 'active', 'cancelled', 'past_due'], default: 'inactive' },
     expiresAt: { type: Date, default: null }
   },
+  streak: { count: { type: Number, default: 0 }, best: { type: Number, default: 0 }, lastDay: { type: Number, default: null } },
   avatarSettings: { type: mongoose.Schema.Types.Mixed, default: {} }
 }, { timestamps: true });
 userSchema.methods.canUploadVideo = function () {

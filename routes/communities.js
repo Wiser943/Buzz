@@ -38,7 +38,7 @@ router.get('/:slug', optionalAuth, async (req, res, next) => {
 router.get('/:slug/posts', async (req, res, next) => {
   try {
     const c = await Community.findOne({ slug: String(req.params.slug).toLowerCase() }); if (!c) return res.status(404).json({ error: 'Community not found.' });
-    res.json({ posts: await Post.find({ community: c._id, status: 'published' }).sort({ _id: -1 }).limit(30).populate('author', 'username displayName avatarUrl isVerified') });
+    res.json({ posts: await Post.find({ community: c._id, status: 'published', threadRoot: null }).sort({ _id: -1 }).limit(30).populate('author', 'username displayName avatarUrl isVerified') });
   } catch (e) { next(e); }
 });
 router.post('/:slug/join', auth, async (req, res, next) => {
