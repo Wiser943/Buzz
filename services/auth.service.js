@@ -24,7 +24,7 @@ async function login(input) {
   const email = String(input.email || '').trim().toLowerCase();
   const user = await User.findOne({ email });
   if (!user || !(await bcrypt.compare(String(input.password || ''), user.passwordHash))) throw new Error('Email or password is incorrect.');
-  if ((user.status || 'active') !== 'active') throw new Error('Your account is suspended.');
+  if ((user.status || 'active') !== 'active') throw new Error('Your account is suspended. Visit /appeal to request a review.');
   return { token: tokenFor(user), user: publicUser(user) };
 }
 module.exports = { register, login, publicUser, tokenFor };

@@ -1,7 +1,12 @@
 const mongoose = require('mongoose');
 const S = new mongoose.Schema({
-  reporter: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  targetType: { type: String, enum: ['user', 'post', 'profile_picture'], required: true },
+  reporter: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  auto: { type: Boolean, default: false },
+  flags: [String],
+  category: { type: String, enum: ['general', 'copyright'], default: 'general' },
+  claimant: { name: String, email: String, detail: { type: String, maxlength: 1000 } },
+  targetTrack: { type: mongoose.Schema.Types.ObjectId, ref: 'Track' },
+  targetType: { type: String, enum: ['user', 'post', 'profile_picture', 'track'], required: true },
   targetUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   targetPost: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' },
   reason: { type: String, trim: true, maxlength: 500, default: '' },

@@ -74,16 +74,19 @@ screens.sports = {
 };
 
 /* ---------- Notifications ---------- */
-const NT = { like: 'liked your post', comment: 'commented on your post', follow: 'started following you' };
+const NT = { like: 'liked your post', comment: 'commented on your post', follow: 'started following you', repost: 'reposted your post' };
+const SYS_TYPES = ['moderation', 'takedown', 'appeal', 'system', 'verification', 'payment', 'opportunity'];
+const SYS_ICON = { moderation: 'triangle-alert', takedown: 'triangle-alert', verification: 'badge-check', payment: 'badge-check', appeal: 'scale', opportunity: 'briefcase', system: 'bell' };
 screens.notifications = {
   html() { return `<div class="notif-title">Notifications</div><div id="ntBody"><div class="feed-loading">Loading…</div></div>`; },
   async wire() {
     const body = $('#ntBody'); if (!token()) { body.innerHTML = '<div class="notif-empty">Log in to see your notifications.</div>'; return; }
     try {
       const { notifications } = await api('/api/notifications');
-      const row = n => { const sys = !n.actor || ['moderation', 'system', 'verification'].includes(n.type); return `<div class="nt ${n.read ? '' : 'new'}" data-post="${n.post || ''}" data-user="${n.actor && !sys ? esc(n.actor.username) : ''}">${sys ? `<div class="nt-ico ${n.type === 'moderation' ? 'red' : ''}">${ico(n.type === 'moderation' ? 'triangle-alert' : n.type === 'verification' ? 'badge-check' : 'bell')}</div>` : userAv(n.actor)}<div class="nt-txt">${sys ? esc(n.text) : `<b>${esc(n.actor.username)}</b> ${NT[n.type] || ''}${n.type === 'comment' && n.text ? `: “${esc(n.text)}”` : ''}`}<small>${ago(n.createdAt)}</small></div></div>`; };
+      const row = n => { const sys = !n.actor || SYS_TYPES.includes(n.type); return `<div class="nt ${n.read ? '' : 'new'}" data-post="${n.post || ''}" data-user="${n.actor && !sys ? esc(n.actor.username) : ''}">${sys ? `<div class="nt-ico ${['moderation', 'takedown'].includes(n.type) ? 'red' : ''}">${ico(SYS_ICON[n.type] || 'bell')}</div>` : userAv(n.actor)}<div class="nt-txt">${sys ? esc(n.text) : `<b>${esc(n.actor.username)}</b> ${NT[n.type] || ''}${n.type === 'comment' && n.text ? `: “${esc(n.text)}”` : ''}`}<small>${ago(n.createdAt)}</small>${n.target?.id && ['moderation', 'takedown'].includes(n.type) ? `<button class="ap-btn" data-k="${n.target.kind}" data-id="${n.target.id}">Appeal</button>` : ''}</div></div>`; };
       const fresh = notifications.filter(n => !n.read), old = notifications.filter(n => n.read);
       body.innerHTML = notifications.length ? `${fresh.length ? `<div class="notif-label">New</div>${fresh.map(row).join('')}` : ''}${old.length ? `<div class="notif-label">Earlier</div>${old.map(row).join('')}` : ''}` : '<div class="notif-empty">No notifications yet. Likes, follows and updates will show up here.</div>';
+      body.querySelectorAll('.ap-btn').forEach(b => b.onclick = e => { e.stopPropagation(); appealSheet(b.dataset.k, b.dataset.id); });
       body.querySelectorAll('.nt').forEach(e => e.onclick = () => e.dataset.post ? render('post', e.dataset.post) : e.dataset.user && render('user', e.dataset.user));
       refreshIcons(); if (fresh.length) api('/api/notifications/read-all', 'POST').then(updateBadges).catch(() => {});
     } catch (e) { errBox(body, e); }
@@ -127,23 +130,49 @@ screens.chat = {
       if (first && d.messages.length) log.firstChild?.classList?.contains('notif-empty') && log.firstChild.remove();
     }
     try { await pull(true); } catch (e) { errBox(log, e); return; }
+    window.__chatPull = () => pull().catch(() => {});
     timer = setInterval(() => { if (window.__chat !== u || currentView !== 'chat') { clearInterval(timer); return; } pull().catch(() => {}); updateBadges(); }, 4000);
   }
 };
 
 /* ---------- Admin dashboard ---------- */
 screens.admin = {
-  html() { return `<div class="x-head"><h1>Admin</h1></div><div class="seg wide adm"><button class="on" data-t="ov">Overview</button><button data-t="rp">Reports</button><button data-t="us">Users</button><button data-t="vf">Verify</button><button data-t="mt">Matches</button></div><div id="adBody"><div class="feed-loading">Loading…</div></div>`; },
+  html() { return `<div class="x-head"><h1>Admin</h1></div><div class="seg wide adm"><button class="on" data-t="ov">Overview</button><button data-t="rp">Reports</button><button data-t="us">Users</button><button data-t="vf">Verify</button><button data-t="mt">Matches</button><button data-t="ad">Ads</button><button data-t="op">Opps</button><button data-t="ap">Appeals</button><button data-t="au">Audit</button></div><div id="adBody"><div class="feed-loading">Loading…</div></div>`; },
   async wire() {
     const body = $('#adBody'); await loadMe(); if (!isStaff()) { body.innerHTML = '<div class="feed-empty">Access denied.</div>'; return; }
     const act = async (fn, msg) => { try { await fn(); notify(msg); tabs[cur](); } catch (e) { notify(e.message); } };
     let cur = 'ov';
     const tabs = {
-      async ov() { try { const s = await api('/api/admin/stats'); const t = (n, l) => `<div class="stat"><b>${s[n]}</b><small>${l}</small></div>`; body.innerHTML = `<div class="stat-grid">${t('users', 'Users')}${t('newUsers', 'New (7d)')}${t('posts', 'Posts')}${t('newPosts', 'Posts (7d)')}${t('openReports', 'Open reports')}${t('pendingVerification', 'Verify requests')}${t('suspended', 'Suspended/banned')}${t('messagesToday', 'Messages (24h)')}${t('matches', 'Matches')}${t('predictions', 'Predictions')}</div>`; } catch (e) { errBox(body, e); } },
+      async ov() { try { const s = await api('/api/admin/stats'); const t = (n, l) => `<div class="stat"><b>${s[n]}</b><small>${l}</small></div>`; body.innerHTML = `<div class="stat-grid">${t('users', 'Users')}${t('newUsers', 'New (7d)')}${t('posts', 'Posts')}${t('newPosts', 'Posts (7d)')}${t('openReports', 'Open reports')}${t('pendingVerification', 'Verify requests')}${t('suspended', 'Suspended/banned')}${t('messagesToday', 'Messages (24h)')}${t('matches', 'Matches')}${t('predictions', 'Predictions')}${t('tracks', 'Tracks')}${t('pendingAds', 'Ads to review')}${t('pendingOpps', 'Opps to review')}${t('pendingAppeals', 'Appeals')}</div>`; } catch (e) { errBox(body, e); } },
       async rp() {
         try {
-          const { reports } = await api('/api/admin/reports'); body.innerHTML = reports.length ? reports.map(r => `<div class="ad-card"><small class="muted">${r.targetType.replace('_', ' ')} · ${ago(r.createdAt)} · by @${esc(r.reporter?.username)}</small><b>@${esc(r.targetUser?.username || '—')}</b>${r.targetPost ? `<p class="ad-quote">${esc((r.targetPost.text || '(media post)').slice(0, 160))}</p>` : ''}<p>${esc(r.reason) || '<span class="muted">No reason given</span>'}</p><div class="ad-act">${r.targetPost ? `<button data-a="remove_post" data-id="${r._id}">Remove post</button>` : ''}<button data-a="warn" data-id="${r._id}">Warn</button><button data-a="suspend_user" data-id="${r._id}" class="danger">Suspend user</button><button data-a="dismiss" data-id="${r._id}">Dismiss</button></div></div>`).join('') : '<div class="feed-empty">No open reports 🎉</div>';
+          const { reports } = await api('/api/admin/reports');
+          body.innerHTML = reports.length ? reports.map(r => `<div class="ad-card"><small class="muted">${r.category === 'copyright' ? '© COPYRIGHT · ' : ''}${r.targetType.replace('_', ' ')} · ${ago(r.createdAt)} · ${r.auto ? 'auto-flag' : 'by @' + esc(r.reporter?.username)}</small><b>@${esc(r.targetUser?.username || '—')}</b>${r.targetPost ? `<p class="ad-quote">${esc((r.targetPost.text || '(media post)').slice(0, 160))}</p>` : ''}${r.targetTrack ? `<p class="ad-quote">${ico('music')} ${esc(r.targetTrack.title)} <a class="hl" href="${esc(r.targetTrack.audioUrl)}" target="_blank" rel="noopener">play</a></p>` : ''}<p>${esc(r.reason) || '<span class="muted">No reason given</span>'}</p>${r.claimant?.name ? `<p class="ad-quote"><b>Claimant:</b> ${esc(r.claimant.name)} · ${esc(r.claimant.email)}<br>${esc(r.claimant.detail)}</p>` : ''}<div class="ad-act">${r.targetPost ? `<button data-a="remove_post" data-id="${r._id}">Remove post</button>` : ''}${r.targetTrack ? `<button data-a="takedown_track" data-id="${r._id}" class="danger">Take down track</button>` : ''}<button data-a="warn" data-id="${r._id}">Warn</button><button data-a="suspend_user" data-id="${r._id}" class="danger">Suspend user</button><button data-a="dismiss" data-id="${r._id}">Dismiss</button></div></div>`).join('') : '<div class="feed-empty">No open reports 🎉</div>';
           body.querySelectorAll('[data-a]').forEach(b => b.onclick = () => act(() => api(`/api/admin/reports/${b.dataset.id}/resolve`, 'POST', { action: b.dataset.a }), 'Done'));
+          refreshIcons();
+        } catch (e) { errBox(body, e); }
+      },
+      async ad() {
+        try {
+          const { ads } = await api('/api/admin/ads'); body.innerHTML = ads.length ? ads.map(a => `<div class="ad-card"><b>${esc(a.title)}</b><small class="muted">by @${esc(a.advertiser?.username)} · ${a.days} days${a.flags?.length ? ' · ⚠ ' + a.flags.join(', ') : ''}</small><p>${esc(a.text)}</p><a class="hl" href="${esc(a.ctaUrl)}" target="_blank" rel="noopener noreferrer">${esc(a.ctaUrl)}</a><div class="ad-act"><button data-d="approve" data-id="${a._id}">Approve</button><button data-d="reject" data-id="${a._id}" class="danger">Reject</button></div></div>`).join('') : '<div class="feed-empty">No ads waiting.</div>';
+          body.querySelectorAll('[data-d]').forEach(b => b.onclick = () => act(() => api('/api/admin/ads/' + b.dataset.id, 'POST', { decision: b.dataset.d, note: b.dataset.d === 'reject' ? (prompt('Reason (shown to advertiser):') || '') : '' }), 'Done'));
+        } catch (e) { errBox(body, e); }
+      },
+      async op() {
+        try {
+          const { opportunities } = await api('/api/admin/opportunities'); body.innerHTML = opportunities.length ? opportunities.map(o => `<div class="ad-card"><b>${esc(o.title)}</b><small class="muted">${o.type} · by @${esc(o.poster?.username)} · ${esc(o.location)}</small><p>${esc(o.description.slice(0, 240))}</p><div class="ad-act"><button data-d="approve" data-id="${o._id}">Approve</button><button data-d="reject" data-id="${o._id}" class="danger">Reject</button></div></div>`).join('') : '<div class="feed-empty">No opportunities waiting.</div>';
+          body.querySelectorAll('[data-d]').forEach(b => b.onclick = () => act(() => api('/api/admin/opportunities/' + b.dataset.id, 'POST', { decision: b.dataset.d, note: b.dataset.d === 'reject' ? (prompt('Reason:') || '') : '' }), 'Done'));
+        } catch (e) { errBox(body, e); }
+      },
+      async ap() {
+        try {
+          const { appeals } = await api('/api/admin/appeals'); body.innerHTML = appeals.length ? appeals.map(a => `<div class="ad-card"><b>@${esc(a.user?.username)}</b><small class="muted">${a.targetType} appeal · ${ago(a.createdAt)}</small><p>${esc(a.reason)}</p><div class="ad-act"><button data-d="approve" data-id="${a._id}">Restore</button><button data-d="deny" data-id="${a._id}" class="danger">Deny</button></div></div>`).join('') : '<div class="feed-empty">No pending appeals.</div>';
+          body.querySelectorAll('[data-d]').forEach(b => b.onclick = () => act(() => api('/api/admin/appeals/' + b.dataset.id, 'POST', { decision: b.dataset.d }), 'Done'));
+        } catch (e) { errBox(body, e); }
+      },
+      async au() {
+        try {
+          const { logs } = await api('/api/admin/audit'); body.innerHTML = logs.length ? logs.map(l => `<div class="ad-card"><b>${esc(l.action)}</b><small class="muted">${esc(l.actor?.username || 'system')} · ${ago(l.createdAt)}${l.targetId ? ' · ' + esc(l.targetId) : ''}</small>${Object.keys(l.meta || {}).length ? `<small class="muted">${esc(JSON.stringify(l.meta))}</small>` : ''}</div>`).join('') : '<div class="feed-empty">No activity yet.</div>';
         } catch (e) { errBox(body, e); }
       },
       async us(q = '') {
@@ -176,4 +205,4 @@ screens.admin = {
 };
 
 /* start the router (screens.js no longer starts it so every screen exists first) */
-loadMe().then(updateBadges); fromLocation();
+/* boot() runs from stage13.js once every screen exists */

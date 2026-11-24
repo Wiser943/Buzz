@@ -12,6 +12,9 @@ const userSchema = new mongoose.Schema({
   karma: { type: Number, default: 0, min: 0 },
   predPoints: { type: Number, default: 0, min: 0, index: true },
   status: { type: String, enum: ['active', 'suspended', 'banned'], default: 'active' },
+  strikes: { type: Number, default: 0 },
+  badgePlan: { type: String, enum: ['creator', 'athlete', null], default: null },
+  badgeUntil: { type: Date, default: null },
   subscription: {
     plan: { type: String, enum: ['free', 'premium'], default: 'free' },
     status: { type: String, enum: ['inactive', 'active', 'cancelled', 'past_due'], default: 'inactive' },

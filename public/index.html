@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#000000" />
   <title>Buzzer — Sports community</title>
-  <link rel="stylesheet" href="/styles.css?v=10" />
+  <link rel="stylesheet" href="/styles.css?v=13" />
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
@@ -24,6 +26,8 @@
         <button class="nav-item" data-view="notifications"><i data-lucide="bell"></i> Notifications</button>
         <button class="nav-item" data-view="opportunities"><i data-lucide="target"></i> Opportunities</button>
         <button class="nav-item" data-view="news"><i data-lucide="newspaper"></i> News</button>
+        <button class="nav-item" data-view="music"><i data-lucide="music"></i> Music</button>
+        <button class="nav-item" data-view="communities"><i data-lucide="users"></i> Communities</button>
         <button class="nav-item" data-view="sports"><i data-lucide="trophy"></i> Sports</button>
         <button class="nav-item" data-view="messages"><i data-lucide="message-circle"></i> Messages</button>
         <button class="nav-item" data-view="admin" id="adminNav" style="display:none"><i data-lucide="shield-check"></i> Admin</button>
@@ -47,8 +51,9 @@
     <button class="tab-item" data-view="profile" aria-label="Profile"><span class="tab-avatar">S</span></button>
   </nav>
   <div class="toast" id="toast" role="status"></div>
-  <script src="/app.js?v=10"></script>
-  <script src="/screens.js?v=10"></script>
-  <script src="/stage9.js?v=10"></script>
+  <script src="/app.js?v=13"></script>
+  <script src="/screens.js?v=13"></script>
+  <script src="/stage9.js?v=13"></script>
+  <script src="/stage13.js?v=13"></script>
 </body>
 </html>

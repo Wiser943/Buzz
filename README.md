@@ -75,3 +75,22 @@ Feed endpoints require a reachable MongoDB connection. This stage does not imple
 - Set `IMGBB_API_KEY` in your environment (Render dashboard). Post images, avatars and covers upload to ImgBB; without a key they fall back to local disk. Videos stay local (ImgBB is images only). Requires Node 18+.
 - SPA paths: `/`, `/explore`, `/notifications`, `/create`, `/profile`, `/profile/points`, `/profile/edit`, `/settings`, `/u/:username`, `/post/:id`.
 - New `GET /api/posts/:id`.
+
+## Stage 13 — what's new
+Live updates (SSE), search, real stories, reposts, comment voting + karma, communities, music (upload, waveform player, playlists, charts, copyright claims and takedowns with 3-strike policy), Paystack payments for badges, ads (manager, approval queue, sponsored posts, optional Google AdSense), opportunities (post, apply, review), appeals, auto-moderation, audit log, upload content checks, rate limits, PWA (installable, alerts while the app is open).
+
+### Environment variables
+| Name | Purpose |
+|---|---|
+| `IMGBB_API_KEY` | image hosting (posts, avatars, covers) |
+| `UPLOAD_DIR` | persistent disk path for audio and video (Render disk) — without it files vanish on redeploy |
+| `PAYSTACK_SECRET_KEY`, `APP_URL` | badge payments; set the webhook to `APP_URL/api/payments/webhook` |
+| `ADSENSE_CLIENT`, `ADSENSE_SLOT` | optional Google ads in the feed |
+| `ADMIN_EMAILS` | emails that become admin |
+| `BANNED_WORDS`, `AUTO_HIDE_REPORTS` | moderation (rejected words; reports needed to auto-hide, default 3) |
+
+### Notes
+- Messages and notifications use Server-Sent Events (works on Render, no extra packages).
+- Phone alerts while the app is *closed* need Web Push (VAPID keys + the `web-push` package); the service worker already handles push events.
+- Rate limiting is in-memory (single server). Move to Redis if you run several instances.
+- Charts rank by plays + 5×likes, all-time.

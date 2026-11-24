@@ -5,6 +5,9 @@ const Follow = require('../models/Follow');
 const Block = require('../models/Block');
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
+const stream = require('../services/stream');
+const rateLimit = require('../middleware/rateLimit');
+const { scan } = require('../services/moderation.service');
 router.use(auth);
 const card = 'username displayName avatarUrl isVerified';
 const keyOf = (a, b) => [String(a), String(b)].sort().join(':');
@@ -46,7 +49,7 @@ router.get('/with/:username', async (req, res, next) => {
     res.json({ user: other, messages, canMessage: await canMessage(req.user._id, other._id) });
   } catch (e) { next(e); }
 });
-router.post('/with/:username', async (req, res, next) => {
+router.post('/with/:username', rateLimit({ windowMs: 60000, max: 40, by: 'user', message: 'You are sending messages too fast.' }), async (req, res, next) => {
   try {
     const text = typeof req.body.text === 'string' ? req.body.text.trim() : '';
     if (!text || text.length > 2000) return res.status(400).json({ error: 'Message must be 1–2000 characters.' });
@@ -55,7 +58,9 @@ router.post('/with/:username', async (req, res, next) => {
     if (!(await canMessage(req.user._id, other._id))) return res.status(403).json({ error: 'You can only message users who follow you and whom you follow.' });
     const key = keyOf(req.user._id, other._id);
     const conv = await Conversation.findOneAndUpdate({ key }, { $setOnInsert: { key, participants: [req.user._id, other._id] } }, { upsert: true, new: true });
+    if (scan(text).reject) return res.status(400).json({ error: 'Your message contains disallowed words.' });
     const message = await Message.create({ conversation: conv._id, sender: req.user._id, text });
+    stream.push(other._id, 'message', { from: req.user.username, text: text.slice(0, 80) });
     conv.lastMessage = text.slice(0, 120); conv.lastSender = req.user._id; conv.lastAt = message.createdAt; await conv.save();
     res.status(201).json({ message });
   } catch (e) { next(e); }

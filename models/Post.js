@@ -7,6 +7,10 @@ const postSchema = new mongoose.Schema({
   visibility: { type: String, enum: ['public', 'followers'], default: 'public' },
   status: { type: String, enum: ['pending', 'published', 'removed'], default: 'published' },
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  commentsCount: { type: Number, default: 0 }
+  commentsCount: { type: Number, default: 0 },
+  isRepost: { type: Boolean, default: false },
+  repostOf: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', default: null },
+  repostsCount: { type: Number, default: 0 },
+  community: { type: mongoose.Schema.Types.ObjectId, ref: 'Community', default: null, index: true }
 }, { timestamps: true });
 module.exports = mongoose.model('Post', postSchema);
