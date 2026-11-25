@@ -34,31 +34,27 @@ async function blockUser(username) {
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('.more-btn[data-post]'); if (!b) return;
-  e.stopPropagation(); if (b.dataset.author === myName()) return ownPostSheet(b.dataset.post);
-  sheet(`<div class="sh-group">${item('mpRep', 'flag', 'Report post', 1)}${item('mpBlk', 'user-round-x', 'Block @' + esc(b.dataset.author), 1)}</div>`);
-  $('#mpRep').onclick = () => reportSheet('post', b.dataset.author, b.dataset.post); $('#mpBlk').onclick = () => blockUser(b.dataset.author);
+  e.stopPropagation(); window.__anchor = { r: b.getBoundingClientRect(), t: Date.now() }; if (b.dataset.author === myName()) return ownPostSheet(b.dataset.post);
+  const art = b.closest('article'), fl = art?.querySelector('.follow-link'), following = !!fl && /Following/i.test(fl.textContent), text = (art?.querySelector('.post-text')?.textContent || '').trim(), url = location.origin + '/post/' + b.dataset.post;
+  window.__anchor = { r: b.getBoundingClientRect(), t: Date.now() };
+  sheet(`<div class="sh-group">${item('mpShare', 'share', 'Share to…')}${item('mpProf', 'circle-user-round', 'View User Profile')}${item('mpFollow', following ? 'user-round-check' : 'user-round-plus', following ? 'Unfollow User' : 'Follow User')}${text ? item('mpTr', 'languages', 'Translate Description') : ''}</div><div class="sh-group">${item('mpRep', 'flag', 'Report Post', 1)}${item('mpBlk', 'user-round-x', 'Block User', 1)}${item('mpRepU', 'flag', 'Report User', 1)}</div>`);
+  $('#mpShare').onclick = () => { closeSheets(); navigator.share ? navigator.share({ url }).catch(() => {}) : navigator.clipboard?.writeText(url).then(() => notify('Link copied')); };
+  $('#mpProf').onclick = () => render('user', b.dataset.author);
+  $('#mpFollow').onclick = async () => { closeSheets(); if (fl) return fl.click(); const bt = document.createElement('button'); bt.dataset.on = following ? '1' : ''; const on = await toggleFollow(b.dataset.author, bt); notify(on ? 'Following' : 'Unfollowed'); };
+  $('#mpTr')?.addEventListener('click', () => { closeSheets(); window.open('https://translate.google.com/?sl=auto&tl=en&op=translate&text=' + encodeURIComponent(text.slice(0, 1500)), '_blank', 'noopener'); });
+  $('#mpRep').onclick = () => reportSheet('post', b.dataset.author, b.dataset.post); $('#mpBlk').onclick = () => blockUser(b.dataset.author); $('#mpRepU').onclick = () => reportSheet('user', b.dataset.author);
 }, true);
 
 
 /* own-post menu: share, story, reactions, comments, pin, translate, delete */
 async function ownPostSheet(id) {
   let post; try { post = (await api('/api/posts/' + id)).post; } catch (e) { return notify(e.message); }
-  const url = location.origin + '/post/' + id;
-  sheet(`<div class="sh-pair"><button id="opChat" class="sh-tile">${ico('forward')}<small>Share Post in Chat</small></button><button id="opShare" class="sh-tile">${ico('share-2')}<small>Share</small></button></div><div class="sh-group">${post.isRepost ? '' : item('opEdit', 'pencil', 'Edit post')}${item('opStory', 'circle-fading-plus', 'Add to your story')}${item('opLikes', 'heart', 'View Reactions')}${item('opCmts', 'message-circle', 'View Comments')}${item('opPin', 'pin', post.pinned ? 'Unpin from main grid' : 'Pin to main grid')}${item('opTr', 'languages', 'Translate Description')}</div><div class="sh-group">${item('opDel', 'trash-2', 'Delete Post', 1)}</div>`);
-  $('#opShare').onclick = () => { closeSheets(); navigator.share ? navigator.share({ url }).catch(() => {}) : navigator.clipboard?.writeText(url).then(() => notify('Link copied')); };
-  $('#opCmts').onclick = () => render('post', id);
+  const tiles = [post.isRepost ? '' : `<button id="opEdit" class="sh-tile">${ico('pencil')}<small>Edit post</small></button>`, `<button id="opStory" class="sh-tile">${ico('circle-fading-plus')}<small>Add to your story</small></button>`].filter(Boolean);
+  sheet(`<div class="sh-pair ${tiles.length === 1 ? 'one' : ''}">${tiles.join('')}</div><div class="sh-group">${item('opLikes', 'heart', 'View Reactions')}${item('opPin', 'pin', post.pinned ? 'Unpin from main grid' : 'Pin to main grid')}${item('opTr', 'languages', 'Translate Description')}</div><div class="sh-group">${item('opDel', 'trash-2', 'Delete Post', 1)}</div>`);
   $('#opEdit')?.addEventListener('click', () => {
     sheet(`<h3 class="sh-title">Edit post</h3><textarea id="epText" class="sh-text" maxlength="5000">${esc(post.text || '')}</textarea><button class="purchase" id="epSave">Save changes</button>`);
     $('#epSave').onclick = async () => { try { const d = await api('/api/posts/' + id, 'PATCH', { text: $('#epText').value }); closeSheets(); notify('Post updated'); document.querySelectorAll(`[data-post="${id}"]`).forEach(b => { const a = b.closest('article'); if (!a) return; let p = a.querySelector('.post-text'); if (!p && d.post.text) { p = document.createElement('p'); p.className = 'post-text'; p.dataset.open = id; a.querySelector('.post-head')?.after(p); } if (p) { d.post.text ? p.innerHTML = rich(d.post.text) : p.remove(); } const sm = a.querySelector('.post-head small'); if (sm && !sm.textContent.includes('edited')) sm.textContent += ' · edited'; }); } catch (e) { notify(e.message); } };
   });
-  $('#opChat').onclick = async () => {
-    try {
-      const { users } = await api('/api/messages/contacts');
-      if (!users.length) return notify('Follow each other first to message people');
-      sheet(`<h3 class="sh-title">Send to</h3>${users.map(u => `<button class="ct" data-u="${esc(u.username)}">${userAv(u, 'sm')}<span><b>${esc(u.displayName || u.username)}</b><small>@${esc(u.username)}</small></span></button>`).join('')}`);
-      document.querySelectorAll('.ct[data-u]').forEach(c => c.onclick = async () => { try { await api('/api/messages/with/' + encodeURIComponent(c.dataset.u), 'POST', { text: url }); closeSheets(); notify('Sent'); } catch (e) { notify(e.message); } });
-    } catch (e) { notify(e.message); }
-  };
   $('#opStory').onclick = async () => {
     if (!post.media?.length || !['image', 'video'].includes(post.mediaType)) return notify('Only posts with a photo or video can be added to your story');
     try { await api('/api/stories', 'POST', { mediaUrl: post.media[0], mediaType: post.mediaType, text: (post.text || '').slice(0, 200) }); closeSheets(); notify('Added to your story for 24 hours'); } catch (e) { notify(e.message); }

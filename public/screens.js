@@ -18,7 +18,15 @@ function closeSheets() { document.querySelectorAll('.bz-layer').forEach(e => e.r
 function sheet(html, cls = '') {
   closeSheets(); const l = document.createElement('div'); l.className = 'bz-layer';
   l.innerHTML = `<div class="bz-back"></div><div class="bz-sheet ${cls}"><div class="sheet-handle"></div>${html}</div>`;
-  document.body.append(l); l.querySelector('.bz-back').onclick = closeSheets; refreshIcons(); requestAnimationFrame(() => l.classList.add('open')); return l;
+  document.body.append(l); l.querySelector('.bz-back').onclick = closeSheets; refreshIcons();
+  const A = window.__anchor; window.__anchor = null;
+  if (A && innerWidth > 900 && Date.now() - A.t < 2500 && !cls) {            // desktop: open next to the button that was clicked
+    const sh = l.querySelector('.bz-sheet'); l.classList.add('has-pop'); sh.classList.add('pop');
+    const w = 280, left = Math.max(8, Math.min(A.r.right - w, innerWidth - w - 8)), h = sh.offsetHeight || 320;
+    sh.style.left = left + 'px'; sh.style.width = w + 'px';
+    if (A.r.bottom + 6 + h > innerHeight && A.r.top - 6 - h > 0) { sh.style.top = 'auto'; sh.style.bottom = (innerHeight - A.r.top + 6) + 'px'; } else { sh.style.top = Math.max(8, Math.min(A.r.bottom + 6, innerHeight - h - 8)) + 'px'; sh.style.bottom = 'auto'; }
+  }
+  requestAnimationFrame(() => l.classList.add('open')); return l;
 }
 const item = (id, icon, label, red) => `<button class="sh-item${red ? ' red' : ''}" id="${id}">${ico(icon)}<span>${label}</span></button>`;
 function shareProfile(u = myName()) { const url = location.origin + '/u/' + u; navigator.share ? navigator.share({ title: 'Buzzer profile', url }).catch(() => {}) : navigator.clipboard?.writeText(url).then(() => notify('Profile link copied')); }
@@ -47,9 +55,15 @@ function openPurchase(start = 0) {
 /* ---------- feed card ---------- */
 const cardBody = (p, pills) => {
   const a = p.author || {}, mine = myName(), liked = (p.likes || []).includes(localStorage.getItem('buzzerId'));
-  const media = p.media?.length ? `<div class="post-media-grid" data-open="${p._id}">${p.media.map(s => p.mediaType === 'video' ? `<video src="${esc(s)}" controls preload="metadata"></video>` : `<img src="${esc(s)}" alt="" loading="lazy">`).join('')}</div>` : '';
+  const many = p.media?.length > 1 && p.mediaType !== 'video';
+  const media = p.media?.length ? `<div class="media-wrap"><div class="post-media-grid${many ? ' carousel' : ''}" data-open="${p._id}">${p.media.map(s => p.mediaType === 'video' ? `<video src="${esc(s)}" controls preload="metadata"></video>` : `<img src="${esc(s)}" alt="" loading="lazy">`).join('')}</div>${many ? `<span class="mc-count">1/${p.media.length}</span>` : ''}</div>` : '';
   const row = pills ? `<div class="pill-row"><button class="pill like-post ${liked ? 'liked' : ''}" data-id="${p._id}">${ico('zap')}<span>${p.likes?.length || 0}</span></button><button class="pill cmt-btn" data-id="${p._id}">${ico('message-circle')}${p.commentsCount ? `<span>${p.commentsCount}</span>` : ''}</button><span class="grow"></span>${a.username === mine ? '' : `<button class="pill repost" data-id="${p._id}">${ico('repeat-2')}<span>${p.repostsCount || ''}</span></button>`}<button class="pill share-post" data-id="${p._id}">${ico('send')}</button></div>` : '';
-  return `<div class="post-head"><div class="ph-av" data-user="${esc(a.username || '')}">${userAv(a)}</div><div class="ph-name"><b data-user="${esc(a.username || '')}">${esc(a.username || 'member')}${vb(a)}${a.username && a.username !== mine ? ` <button class="follow-link" data-follow="${esc(a.username)}">· Follow</button>` : ''}</b><small>${p.pinned ? '📌 Pinned · ' : ''}${ago(p.createdAt)}${p.editedAt ? ' · edited' : ''}</small></div><button class="more-btn" aria-label="More" data-post="${p._id}" data-author="${esc(a.username || '')}">${ico('ellipsis')}</button></div>${media}${row}${p.text ? `<p class="post-text" data-open="${p._id}">${rich(p.text)}</p>` : ''}${p.threadCount ? `<button class="thread-pill" data-open="${p._id}">${ico('messages-square')}Thread · ${p.threadCount + 1} posts</button>` : ''}`;
+  const txt = String(p.text || ''), tagList = [...new Set((txt.match(/(^|\s)#\w+/g) || []).map(t => t.trim()))].slice(0, 8), onlyTags = !!txt && !txt.replace(/(^|\s)#\w+/g, '').trim();
+  const desc = txt ? `<p class="post-text${onlyTags ? ' only-tags' : ''}" data-open="${p._id}">${rich(txt)}</p>` : '';
+  const tags = tagList.length ? `<div class="post-tags">${tagList.map(t => `<span class="hl hl-tag" data-tag="${esc(t)}">${esc(t)}</span>`).join('')}</div>` : '';
+  const thread = p.threadCount ? `<button class="thread-pill" data-open="${p._id}">${ico('messages-square')}Thread · ${p.threadCount + 1} posts</button>` : '';
+  const head = `<div class="post-head"><div class="ph-av" data-user="${esc(a.username || '')}">${userAv(a)}</div><div class="ph-name"><b data-user="${esc(a.username || '')}">${esc(a.username || 'member')}${vb(a)}${a.username && a.username !== mine ? ` <button class="follow-link" data-follow="${esc(a.username)}">· Follow</button>` : ''}</b><small>${p.pinned ? '📌 Pinned · ' : ''}${ago(p.createdAt)}${p.editedAt ? ' · edited' : ''}</small></div><button class="more-btn" aria-label="More" data-post="${p._id}" data-author="${esc(a.username || '')}">${ico('ellipsis')}</button></div>`;
+  return head + desc + media + tags + thread + row;
 };
 feedCard = function (p) {
   if (p.isRepost) { const o = p.repostOf; if (!o || o.status !== 'published') return ''; return `<article class="feed-post dynamic-post"><div class="repost-by" data-user="${esc(p.author?.username || '')}">${ico('repeat-2')}<span>${esc(p.author?.username || 'member')} reposted</span></div>${cardBody(o, true)}</article>`; }
@@ -235,7 +249,7 @@ screens.post = {
     const [more, cm, me] = await Promise.all([postsOf(a.username), fetch(`/api/posts/${id}/comments`).then(r => r.json()).catch(() => ({ comments: [] })), loadMe()]);
     if (currentView !== 'post') return;
     const karma = me?.user?.karma || 0, canComment = !!token() && karma >= MIN_KARMA_TO_COMMENT, others = more.filter(p => p._id !== id).slice(0, 5);
-    const body = feedCard(post).replace(/<div class="post-head">.*?<\/small><\/div><button class="more-btn"[^>]*>.*?<\/button><\/div>/s, '').replace(/(<div class="post-media-grid") data-open="[^"]*"/, '$1');
+    const body = feedCard(post).replace(/<div class="post-head">.*?<\/small><\/div><button class="more-btn"[^>]*>.*?<\/button><\/div>/s, '').replace(/(<div class="post-media-grid[^"]*") data-open="[^"]*"/, '$1');
     let order = 'top'; const list = () => { const cs = [...(cm.comments || [])]; if (order === 'latest') cs.reverse(); else cs.sort((x, y) => (y.score || 0) - (x.score || 0)); return cs.length ? cs.map(c => `<div class="cm"><div class="cm-av">${userAv(c.author, 'sm')}</div><div class="cm-main"><div class="cm-top"><b>${esc(c.author?.username || 'member')}${vb(c.author)}</b><small>${ago(c.createdAt)}</small><button class="more-btn" aria-label="More">${ico('ellipsis')}</button></div><p>${rich(c.text)}</p><div class="votes"><button class="vt ${c.myVote === 1 ? 'on' : ''}" data-c="${c._id}" data-d="1" aria-label="Upvote">${ico('arrow-big-up')}</button><span>${c.score || 0}</span><button class="vt ${c.myVote === -1 ? 'on' : ''}" data-c="${c._id}" data-d="-1" aria-label="Downvote">${ico('arrow-big-down')}</button></div></div></div>`).join('') : '<div class="feed-empty">No comments yet.</div>'; };
     let threadHtml = '';
     if (post.threadCount || post.threadRoot) { try { const th = await api(`/api/posts/${id}/thread`), all = [th.root, ...th.parts]; threadHtml = `<div class="thread-box"><div class="thread-title">${ico('messages-square')}Thread · ${all.length} posts</div>${all.map((t, i) => `<div class="thread-part ${t._id === id ? 'cur' : ''}" ${t._id === id ? '' : `data-open="${t._id}"`}><span class="tp-n">${i + 1}</span><p>${rich((t.text || '').slice(0, 280)) || 'Photo'}</p></div>`).join('')}</div>`; } catch { } }
@@ -258,13 +272,48 @@ const DYN = [
 ];
 const pathFor = (view, arg) => { const d = DYN.find(x => x[1] === view); return d ? d[2](arg) : (ROUTES[view] || '/'); };
 const _render = render; let popping = false;
+/* ---- view cache: a page loads once and stays exactly as it was until the browser is refreshed ---- */
+const viewCache = new Map(); let curKey = null, cacheToken = null;
+const NOCACHE = new Set(['create', 'chat', 'groupChat', 'assistant', 'penalty', 'quiz', 'profileEdit', 'resetPassword', 'verifyEmail', 'admin', 'appeal', 'search']);
+const LIVE = new Set(['notifications', 'messages']);                 // shown instantly from cache, then refreshed in place
+const keyOf = (v, a) => v + (a != null && a !== '' ? ':' + a : '');
+function stashView() {
+  if (!curKey) return; const v = curKey.split(':')[0];
+  main.querySelectorAll('video,audio').forEach(m => { try { m.pause(); } catch (_) { } });
+  if (!NOCACHE.has(v) && main.childNodes.length) { viewCache.delete(curKey); viewCache.set(curKey, { nodes: [...main.childNodes], scroll: window.scrollY }); while (viewCache.size > 14) viewCache.delete(viewCache.keys().next().value); }
+}
+window.bustCache = (...views) => { for (const k of [...viewCache.keys()]) if (!views.length || views.includes(k.split(':')[0])) viewCache.delete(k); };
+const bustFor = (u, m) => {
+  const p = u.split('?')[0];
+  if (/^\/api\/auth\/(login|register)$/.test(p) || (p === '/api/account' && m === 'DELETE')) return bustCache();
+  if (/^\/api\/posts(\/[a-f0-9]{24}(\/(repost|pin))?)?$/.test(p)) return bustCache('home', 'profile', 'user', 'explore', 'post');
+  if (p.startsWith('/api/stories')) return bustCache('home');
+  if (p === '/api/profile/me' || /^\/api\/uploads\/(avatar|cover)/.test(p)) return bustCache('profile', 'user', 'home');
+  if (/follow/i.test(p)) return bustCache('profile', 'user', 'home', 'explore');
+  if (p.startsWith('/api/messages')) return bustCache('messages');
+  if (p.startsWith('/api/sports')) return bustCache('sports', 'explore');
+  if (p.startsWith('/api/opportunities')) return bustCache('opportunities', 'opportunity', 'explore');
+  if (p.startsWith('/api/music')) return bustCache('music', 'track', 'playlist', 'explore');
+  if (p.startsWith('/api/communities')) return bustCache('communities', 'community', 'explore');
+  if (p.startsWith('/api/account/pro')) return bustCache('dashboard', 'profile');
+  if (p.startsWith('/api/ads') || p.startsWith('/api/payments')) bustCache('ads', 'profile', 'points');
+};
+const _nativeFetch = window.fetch.bind(window);
+window.fetch = (u, o) => { try { const m = String(o?.method || 'GET').toUpperCase(); if (m !== 'GET') bustFor(String(u), m); } catch (_) { } return _nativeFetch(u, o); };
+const markNav = view => document.querySelectorAll('.nav-item,.tab-item').forEach(b => b.classList.toggle('active', b.dataset.view === (view === 'points' || view === 'profileEdit' ? 'profile' : view)));
 render = function (view, arg) {
   closeSheets();
   if (PROTECTED.includes(view) && !token()) { authOpen('login'); if (!popping) return; view = 'home'; history.replaceState({}, '', '/'); }
   if (view === 'user' && arg && arg.toLowerCase() === myName()) view = 'profile';
-  const S = screens[view];
-  if (S) { currentView = view; syncAuth(); window.scrollTo(0, 0); main.innerHTML = S.html(arg); document.querySelectorAll('.nav-item,.tab-item').forEach(b => b.classList.toggle('active', b.dataset.view === (view === 'points' || view === 'profileEdit' ? 'profile' : view))); refreshIcons(); S.wire && S.wire(arg); }
-  else _render(view);
+  if (token() !== cacheToken) { viewCache.clear(); cacheToken = token(); }          // different account: never show someone else's pages
+  const key = keyOf(view, arg), refresh = key === curKey;                           // tapping the page you are already on reloads it
+  stashView(); if (refresh) viewCache.delete(key);
+  const hit = viewCache.get(key), S = screens[view]; curKey = key;
+  if (hit) {
+    viewCache.delete(key); currentView = view; syncAuth(); main.replaceChildren(...hit.nodes); markNav(view); refreshIcons(); window.scrollTo(0, hit.scroll);
+    if (LIVE.has(view) && S?.wire) S.wire(arg);
+  } else if (S) { currentView = view; syncAuth(); window.scrollTo(0, 0); main.innerHTML = S.html(arg); markNav(view); refreshIcons(); S.wire && S.wire(arg); }
+  else { main.innerHTML = ''; _render(view); }
   document.body.dataset.view = view;
   const path = pathFor(view, arg);
   if (!popping) (location.pathname + location.search === path ? history.replaceState : history.pushState).call(history, {}, '', path);

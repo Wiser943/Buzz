@@ -3,19 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#000000" />
   <title>Buzzer — Sports community</title>
-  <link rel="stylesheet" href="/styles.css?v=17" />
+  <link rel="stylesheet" href="/styles.css?v=18" />
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
       <button class="mobile-menu" id="mobileMenu" aria-label="Toggle navigation"><i data-lucide="menu"></i></button>
-      <a class="brand" href="/" aria-label="Buzzer home"><span class="brand-mark">B</span><span>Buzzer</span></a>
-      <div class="coin-pill" aria-hidden="true"><span class="coin">B</span><span class="coin-bar"><i></i></span></div>
+      <a class="brand" href="/" aria-label="Buzzer home"><img class="brand-logo" src="/logo-mark.png" alt=""><img class="brand-word" src="/logo-word.png" alt="Buzzer"></a>
       <div class="top-search"><i data-lucide="search"></i><input id="search" placeholder="Explore" aria-label="Search" /></div>
       <div class="top-actions"><button class="icon-btn m-only" id="mSearch" title="Search"><i data-lucide="search"></i></button><button class="create-btn" id="createBtn">＋ Create</button><button class="auth-top-btn" id="authTopBtn">Join / Login</button><button class="icon-btn" id="msgBtn" title="Messages"><i data-lucide="messages-square"></i></button><button class="icon-btn desk-only" id="bellTop" title="Notifications"><i data-lucide="bell"></i></button><button class="profile-mini desk-only" id="profileMini">S</button></div>
     </header>
@@ -33,12 +34,13 @@
         <button class="nav-item" data-view="admin" id="adminNav" style="display:none"><i data-lucide="shield-check"></i> Admin</button>
         <button class="nav-item" data-view="games"><i data-lucide="gamepad-2"></i> Games</button>
       </nav>
-      <div class="sidebar-section"><div class="section-label">LATEST NEWS <span>⌃</span></div>
-        <article class="side-news"><small>FOUR GROUPS, TWO THROUGH</small><strong>How Does the CAF Confederation Cup Work? 16...</strong></article>
-        <article class="side-news"><small>TALENT VERSUS CONDITIONS</small><strong>Why Do Some Football Academies Produce Stars...</strong></article>
-        <article class="side-news"><small>CLIMB TO THE FINAL</small><strong>How Does the FIFA Intercontinental Cup Work?...</strong></article>
-      </div>
-      <div class="side-ad"><div class="ad-copy">WHERE<br>SPORTS<br>LIVES</div><div class="ad-caption">Reach fans, athletes & clubs inside the sports network.</div><button>START ADVERTISING</button></div>
+      <div class="sidebar-section"><div class="section-label">TRENDING NOW <span>⌃</span></div><div id="sideTrend"><small class="muted">Loading…</small></div></div>
+      <div class="side-ad" id="sideAd"><div class="ad-copy">WHERE<br>SPORTS<br>LIVES</div><div class="ad-caption">Reach fans, athletes &amp; clubs inside the sports network.</div><button>START ADVERTISING</button></div>
+      <div class="sidebar-section res"><div class="section-label">RESOURCES</div>
+        <button class="res-link" id="resHelp">Help Center <i data-lucide="external-link"></i></button>
+        <button class="res-link" id="resGuide">Community Guidelines <i data-lucide="external-link"></i></button>
+        <button class="res-link" id="resAds">Advertise with Us <i data-lucide="external-link"></i></button>
+        <div class="res-foot">© 2026 Buzzer<br><a id="resTerms">Terms of Service</a> | <a id="resPriv">Privacy Policy</a></div></div>
     </aside>
     <main id="main" class="main-content"></main>
     <aside class="rightbar" id="rightbar"></aside>
@@ -51,12 +53,13 @@
     <button class="tab-item" data-view="profile" aria-label="Profile"><span class="tab-avatar">S</span></button>
   </nav>
   <div class="toast" id="toast" role="status"></div>
-  <script src="/app.js?v=17"></script>
-  <script src="/screens.js?v=17"></script>
-  <script src="/stage9.js?v=17"></script>
-  <script src="/stage13.js?v=17"></script>
-  <script src="/stage17.js?v=17"></script>
-  <script src="/stage18.js?v=17"></script>
-  <script src="/stage19.js?v=17"></script>
+  <script src="/app.js?v=18"></script>
+  <script src="/screens.js?v=18"></script>
+  <script src="/stage9.js?v=18"></script>
+  <script src="/stage13.js?v=18"></script>
+  <script src="/stage17.js?v=18"></script>
+  <script src="/stage18.js?v=18"></script>
+  <script src="/stage19.js?v=18"></script>
+  <script src="/stage20.js?v=18"></script>
 </body>
 </html>
