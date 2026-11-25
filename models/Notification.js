@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const S = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  type: { type: String, enum: ['like', 'comment', 'follow', 'repost', 'moderation', 'takedown', 'appeal', 'verification', 'payment', 'opportunity', 'system'], required: true },
+  type: { type: String, enum: ['like', 'comment', 'mention', 'follow', 'repost', 'moderation', 'takedown', 'appeal', 'verification', 'payment', 'opportunity', 'system'], required: true },
   actor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   post: { type: mongoose.Schema.Types.ObjectId, ref: 'Post' },
   text: { type: String, maxlength: 300, default: '' },

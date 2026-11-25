@@ -21,6 +21,22 @@ const userSchema = new mongoose.Schema({
     expiresAt: { type: Date, default: null }
   },
   streak: { count: { type: Number, default: 0 }, best: { type: Number, default: 0 }, lastDay: { type: Number, default: null } },
+  emailVerified: { type: Boolean, default: false },
+  passwordChangedAt: { type: Date, default: null },
+  settings: {
+    notif: {
+      likes: { type: Boolean, default: true }, comments: { type: Boolean, default: true }, follows: { type: Boolean, default: true },
+      reposts: { type: Boolean, default: true }, mentions: { type: Boolean, default: true }
+    },
+    privacy: {
+      showStreak: { type: Boolean, default: true },
+      allowMessages: { type: String, enum: ['mutual', 'nobody'], default: 'mutual' }
+    }
+  },
+  proDashboard: { type: Boolean, default: false },
+  gamePoints: { type: Number, default: 0 },
+  gameDaily: { day: { type: Number, default: null }, points: { type: Number, default: 0 } },
+  aiUsage: { day: { type: Number, default: null }, count: { type: Number, default: 0 } },
   avatarSettings: { type: mongoose.Schema.Types.Mixed, default: {} }
 }, { timestamps: true });
 userSchema.methods.canUploadVideo = function () {

@@ -5,7 +5,7 @@ const ico = (n, c = '') => `<i data-lucide="${n}" class="${c}"></i>`;
 const ago = d => { const s = (Date.now() - new Date(d)) / 1000; if (s < 3600) return Math.max(1, Math.floor(s / 60)) + ' min ago'; if (s < 86400) return Math.floor(s / 3600) + ' hours ago'; if (s < 2592000) return Math.floor(s / 86400) + ' days ago'; if (s < 31536000) return Math.floor(s / 2592000) + ' months ago'; return Math.floor(s / 31536000) + ' years ago'; };
 const fmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e4 ? (n / 1e3).toFixed(1) + 'K' : String(n);
 const userAv = (u, c = '') => u?.avatarUrl ? `<img class="av ${c}" src="${esc(u.avatarUrl)}" alt="">` : `<div class="av ${c}">${esc((u?.displayName || u?.username || 'B')[0].toUpperCase())}</div>`;
-const rich = t => esc(t).replace(/(https?:\/\/[^\s<]+)/g, '<a class="hl" href="$1" target="_blank" rel="noopener noreferrer">$1</a>').replace(/(^|\s)(#\w+)/g, '$1<span class="hl">$2</span>');
+const rich = t => esc(t).split(/(https?:\/\/[^\s<]+)/g).map((p, i) => i % 2 ? `<a class="hl" href="${p}" target="_blank" rel="noopener noreferrer">${p}</a>` : p.replace(/(^|[^\w@])@([A-Za-z0-9_]{4,24})\b/g, '$1<span class="hl hl-mention" data-mention="$2">@$2</span>').replace(/(^|\s)(#\w+)/g, '$1<span class="hl hl-tag" data-tag="$2">$2</span>')).join('');
 const vb = u => u?.isVerified ? ico('badge-check', 'vbadge') : '';
 const myName = () => localStorage.getItem('buzzerUsername') || '';
 const back = () => history.length > 1 ? history.back() : render('home');
@@ -49,7 +49,7 @@ const cardBody = (p, pills) => {
   const a = p.author || {}, mine = myName(), liked = (p.likes || []).includes(localStorage.getItem('buzzerId'));
   const media = p.media?.length ? `<div class="post-media-grid" data-open="${p._id}">${p.media.map(s => p.mediaType === 'video' ? `<video src="${esc(s)}" controls preload="metadata"></video>` : `<img src="${esc(s)}" alt="" loading="lazy">`).join('')}</div>` : '';
   const row = pills ? `<div class="pill-row"><button class="pill like-post ${liked ? 'liked' : ''}" data-id="${p._id}">${ico('zap')}<span>${p.likes?.length || 0}</span></button><button class="pill cmt-btn" data-id="${p._id}">${ico('message-circle')}${p.commentsCount ? `<span>${p.commentsCount}</span>` : ''}</button><span class="grow"></span>${a.username === mine ? '' : `<button class="pill repost" data-id="${p._id}">${ico('repeat-2')}<span>${p.repostsCount || ''}</span></button>`}<button class="pill share-post" data-id="${p._id}">${ico('send')}</button></div>` : '';
-  return `<div class="post-head"><div class="ph-av" data-user="${esc(a.username || '')}">${userAv(a)}</div><div class="ph-name"><b data-user="${esc(a.username || '')}">${esc(a.username || 'member')}${vb(a)}${a.username && a.username !== mine ? ` <button class="follow-link" data-follow="${esc(a.username)}">· Follow</button>` : ''}</b><small>${p.pinned ? '📌 Pinned · ' : ''}${ago(p.createdAt)}</small></div><button class="more-btn" aria-label="More" data-post="${p._id}" data-author="${esc(a.username || '')}">${ico('ellipsis')}</button></div>${media}${row}${p.text ? `<p class="post-text" data-open="${p._id}">${rich(p.text)}</p>` : ''}${p.threadCount ? `<button class="thread-pill" data-open="${p._id}">${ico('messages-square')}Thread · ${p.threadCount + 1} posts</button>` : ''}`;
+  return `<div class="post-head"><div class="ph-av" data-user="${esc(a.username || '')}">${userAv(a)}</div><div class="ph-name"><b data-user="${esc(a.username || '')}">${esc(a.username || 'member')}${vb(a)}${a.username && a.username !== mine ? ` <button class="follow-link" data-follow="${esc(a.username)}">· Follow</button>` : ''}</b><small>${p.pinned ? '📌 Pinned · ' : ''}${ago(p.createdAt)}${p.editedAt ? ' · edited' : ''}</small></div><button class="more-btn" aria-label="More" data-post="${p._id}" data-author="${esc(a.username || '')}">${ico('ellipsis')}</button></div>${media}${row}${p.text ? `<p class="post-text" data-open="${p._id}">${rich(p.text)}</p>` : ''}${p.threadCount ? `<button class="thread-pill" data-open="${p._id}">${ico('messages-square')}Thread · ${p.threadCount + 1} posts</button>` : ''}`;
 };
 feedCard = function (p) {
   if (p.isRepost) { const o = p.repostOf; if (!o || o.status !== 'published') return ''; return `<article class="feed-post dynamic-post"><div class="repost-by" data-user="${esc(p.author?.username || '')}">${ico('repeat-2')}<span>${esc(p.author?.username || 'member')} reposted</span></div>${cardBody(o, true)}</article>`; }
@@ -73,10 +73,34 @@ wireFeed = function (t) {
   t.querySelectorAll('.promo-x').forEach(b => b.onclick = () => b.closest('.promo').remove());
   t.querySelectorAll('.promo-btn').forEach(b => b.onclick = () => openPurchase(1));
 };
+let feedMode = 'all', feedCursor = null, feedObs = null, feedLoading = false;
+const feedTabsHtml = () => `<div class="feed-tabs" id="feedTabs"><button data-m="all" class="${feedMode === 'all' ? 'on' : ''}">For you</button><button data-m="following" class="${feedMode === 'following' ? 'on' : ''}">Following</button></div>`;
+const feedEmpty = () => feedMode === 'following' ? `<div class="feed-empty">Nothing here yet.<br>Follow people to see their posts in this tab.<br><button class="outline-btn" id="feedGoExplore" style="margin-top:12px">${ico('compass')}Find people to follow</button></div>` : '<div class="feed-empty">No posts yet. Be the first to share.</div>';
+async function feedMore(t) {
+  if (feedLoading || !feedCursor) return; feedLoading = true; const mine = feedMode;
+  try {
+    const d = await api(`/api/posts?limit=20&before=${feedCursor}${mine === 'following' ? '&feed=following' : ''}`); if (mine !== feedMode || !t.isConnected) return;
+    $('#feedMore')?.remove(); const w = document.createElement('div'); w.className = 'feed-page'; w.innerHTML = (d.posts || []).map(p => feedCard(p)).join(''); t.append(w); wireFeed(w); refreshIcons();
+    feedCursor = d.nextCursor; if (feedCursor) feedSentinel(t); else t.insertAdjacentHTML('beforeend', '<div class="feed-end">You are all caught up</div>');
+  } catch (e) { $('#feedMore') && ($('#feedMore').textContent = 'Could not load more. Tap to retry.', $('#feedMore').onclick = () => { feedLoading = false; feedMore(t); }); }
+  finally { feedLoading = false; }
+}
+function feedSentinel(t) {
+  const s = document.createElement('div'); s.id = 'feedMore'; s.className = 'feed-more'; s.textContent = 'Loading more…'; t.append(s);
+  feedObs?.disconnect(); if ('IntersectionObserver' in window) { feedObs = new IntersectionObserver(es => { if (es[0].isIntersecting) feedMore(t); }, { rootMargin: '600px' }); feedObs.observe(s); } else s.onclick = () => feedMore(t);
+}
+views.home = views.home.replace('<div id="dynamicFeed"', '<div id="feedTabsHost"></div><div id="dynamicFeed"');
 loadFeed = async function () {
   const t = $('#dynamicFeed'); if (!t) return;
-  try { const r = await fetch('/api/posts?limit=20'), d = await r.json(); if (!r.ok) throw 0; const ps = d.posts || []; t.innerHTML = ps.length ? ps.map((p, i) => feedCard(p) + (i === 1 ? promo() : '')).join('') : '<div class="feed-empty">No posts yet. Be the first to share.</div>'; wireFeed(t); refreshIcons(); window.injectAds && injectAds(t); }
-  catch { t.innerHTML = '<div class="feed-empty">Feed unavailable. Connect MongoDB to load posts.</div>'; }
+  const host = $('#feedTabsHost'); if (host) { host.innerHTML = feedTabsHtml(); host.querySelectorAll('button').forEach(b => b.onclick = () => { if (b.dataset.m === 'following' && !token()) return authOpen('login'); if (feedMode === b.dataset.m) return; feedMode = b.dataset.m; loadFeed(); }); }
+  if (feedMode === 'following' && !token()) feedMode = 'all';
+  feedObs?.disconnect(); feedCursor = null; feedLoading = false; const mode = feedMode;
+  try {
+    const d = await api(`/api/posts?limit=20${mode === 'following' ? '&feed=following' : ''}`); if (mode !== feedMode || !t.isConnected) return;
+    const ps = d.posts || []; t.innerHTML = ps.length ? ps.map((p, i) => feedCard(p) + (i === 1 && mode === 'all' ? promo() : '')).join('') : feedEmpty();
+    wireFeed(t); $('#feedGoExplore')?.addEventListener('click', () => render('explore')); refreshIcons(); window.injectAds && injectAds(t);
+    feedCursor = d.nextCursor; if (feedCursor) feedSentinel(t);
+  } catch (e) { t.innerHTML = `<div class="feed-empty">${esc(e.message || 'Feed unavailable.')}</div>`; }
 };
 loadProfileFeed = async function () { const t = $('#profileFeed'); if (!t) return; const ps = (await postsOf(myName())).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0)); t.innerHTML = ps.length ? ps.map(feedCard).join('') : '<div class="feed-empty">No posts yet.</div>'; wireFeed(t); refreshIcons(); const c = $('#pillPosts'); if (c) c.textContent = 'Posts - ' + ps.length; const u = $('#stUp'); if (u) u.textContent = ps.length; };
 views.home = views.home.replace('<small>See all ›</small>', '<button class="arena-x" aria-label="Close Arena TV">×</button>');
@@ -91,14 +115,14 @@ const composerRow = () => `<div class="mini-composer" id="miniComposer">${userAv
 
 const paintStreak = st => { const el = $('#streakChip'); if (!el) return; if (!st || !st.count) { el.hidden = false; el.classList.add('cold'); el.innerHTML = `${ico('flame')}<span>Post or comment today to start a streak</span>`; } else { el.hidden = false; el.classList.remove('cold'); el.innerHTML = `${ico('flame')}<span><b>${st.count}-day streak</b>${st.today ? '' : ' · post today to keep it'}${st.best > st.count ? ` · best ${st.best}` : ''}</span>`; } refreshIcons(); };
 screens.profile = {
-  html() { const un = myName(), nm = localStorage.getItem('buzzerName') || un; return `${topline('p')}${sessionStorage.getItem('vbX') ? '' : `<div class="vbanner" id="vBanner"><button class="vx" id="vX">${ico('x')}</button>${ico('badge-check', 'big')}<h3>Sports Verified, get verified badge</h3><p>Help followers feel more confident messaging you from your ads.</p><button id="vUp">Upgrade Now</button></div>`}<div class="p-hero"><div class="av-wrap" id="avWrap">${userAv({ username: nm }, 'xl')}</div><div class="p-names"><h2 id="pName">${esc(nm)}</h2><p>@${esc(un)}</p></div></div><input type="file" id="avFile" accept="image/jpeg,image/png,image/webp,image/gif" hidden><div class="p-stats"><span><b id="stUp">0</b> uploads</span><span><b id="stFo">0</b> followers</span><span><b id="stFg">0</b> following</span></div><div class="streak-chip" id="streakChip" hidden></div><div class="p-cards"><div class="karma-card2">${ico('shield-half')}<div><b>Newbie</b><small id="karmaTxt">Level 1 · 0 Karma</small></div></div><div class="opp-card"><div><b>Opportunities</b><small>Explore. Join. Grow.</small></div>${ico('goal')}</div></div><div class="pro-card"><div><b>Professional Dashboard</b><small>Turn your passion into rewards</small></div><button id="activatePro">Activate</button></div><p class="p-bio" id="pBio"></p>${pills()}${composerRow()}<div id="profileFeed" class="dynamic-feed"></div>`; },
+  html() { const un = myName(), nm = localStorage.getItem('buzzerName') || un; return `${topline('p')}${sessionStorage.getItem('vbX') ? '' : `<div class="vbanner" id="vBanner"><button class="vx" id="vX">${ico('x')}</button>${ico('badge-check', 'big')}<h3>Sports Verified, get verified badge</h3><p>Help followers feel more confident messaging you from your ads.</p><button id="vUp">Upgrade Now</button></div>`}<div class="p-hero"><div class="av-wrap" id="avWrap">${userAv({ username: nm }, 'xl')}</div><div class="p-names"><h2 id="pName">${esc(nm)}</h2><p>@${esc(un)}</p></div></div><input type="file" id="avFile" accept="image/jpeg,image/png,image/webp,image/gif" hidden><div class="p-stats"><span><b id="stUp">0</b> uploads</span><span><b id="stFo">0</b> followers</span><span><b id="stFg">0</b> following</span></div><div class="streak-chip" id="streakChip" hidden></div><div class="p-cards"><div class="karma-card2" id="karmaCard" role="button">${ico('shield-half')}<div><b id="karmaName">Newbie</b><small id="karmaTxt">Level 1 · 0 Karma</small></div></div><div class="opp-card" id="oppCard" role="button"><div><b>Opportunities</b><small>Explore. Join. Grow.</small></div>${ico('goal')}</div></div><div class="pro-card"><div><b>Professional Dashboard</b><small>Turn your passion into rewards</small></div><button id="activatePro">Activate</button></div><p class="p-bio" id="pBio"></p>${pills()}${composerRow()}<div id="profileFeed" class="dynamic-feed"></div>`; },
   async wire() {
     wireTop(); $('#vX')?.addEventListener('click', () => { sessionStorage.setItem('vbX', '1'); $('#vBanner').remove(); }); $('#vUp')?.addEventListener('click', () => openPurchase(0));
-    $('#activatePro').onclick = () => notify('Professional Dashboard is coming soon'); $('#miniComposer').onclick = () => render('create');
+    $('#activatePro').onclick = () => render('dashboard'); $('#karmaCard').onclick = () => render('karma'); $('#oppCard').onclick = () => render('opportunities'); $('#miniComposer').onclick = () => render('create');
     loadProfileFeed();
     const d = await loadMe(); if (!d || currentView !== 'profile') return;
     $('#avWrap').innerHTML = `${userAv(d.user, 'xl')}<button class="avatar-add" id="addAv" aria-label="Change photo">${ico('plus')}</button>`; refreshIcons();
-    $('#pName').textContent = d.user.displayName; $('#stFo').textContent = fmt(d.stats.followers); $('#stFg').textContent = fmt(d.stats.following); $('#karmaTxt').textContent = `Level 1 · ${d.user.karma || 0} Karma`; paintStreak(d.user.streak); $('#pBio').textContent = d.user.bio || '';
+    $('#pName').textContent = d.user.displayName; $('#stFo').textContent = fmt(d.stats.followers); $('#stFg').textContent = fmt(d.stats.following); paintKarma(d.user.karma || 0); paintStreak(d.user.streak); profileExtras(d.user); $('#pBio').textContent = d.user.bio || '';
     localStorage.setItem('buzzerName', d.user.displayName);
     $('#addAv').onclick = () => $('#avFile').click();
     $('#avFile').onchange = async e => { const f = e.target.files[0]; if (!f) return; const fd = new FormData(); fd.append('file', f); notify('Uploading photo…'); try { const r = await fetch('/api/uploads/avatar', { method: 'POST', headers: headers(false), body: fd }), j = await r.json(); if (!r.ok) throw new Error(j.error); notify('Photo updated'); render('profile'); } catch (x) { notify(x.message); } };
@@ -204,7 +228,7 @@ function openLightbox(src) {
 screens.post = {
   html() { return `<div class="sub-head post-top" id="pHead"><button class="round bare" id="back">${ico('arrow-left')}</button></div><div id="pBody"><div class="feed-loading">Loading…</div></div>`; },
   async wire(id) {
-    $('#back').onclick = back; let post; try { const r = await fetch('/api/posts/' + id); post = (await r.json()).post; if (!r.ok || !post) throw 0; } catch { $('#pBody').innerHTML = '<div class="feed-empty">Post not found.</div>'; return; }
+    $('#back').onclick = back; let post; try { const r = await fetch('/api/posts/' + id + '?view=1', { headers: headers(false) }); post = (await r.json()).post; if (!r.ok || !post) throw 0; } catch { $('#pBody').innerHTML = '<div class="feed-empty">Post not found.</div>'; return; }
     const a = post.author || {}, mine = myName();
     $('#pHead').innerHTML = `<button class="round bare" id="back">${ico('arrow-left')}</button><div class="ph-av" data-user="${esc(a.username)}">${userAv(a, 'md')}</div><div class="ph-name"><b>${esc(a.username)}${vb(a)}${a.username !== mine ? ` <button class="follow-link" id="pFollow">· Follow</button>` : ''}</b><small>${ago(post.createdAt)}</small></div><button class="round bare">${ico('ellipsis')}</button>`;
     $('#back').onclick = back; $('#pHead [data-user]').onclick = () => render('user', a.username); $('#pFollow')?.addEventListener('click', async e => { const on = await toggleFollow(a.username, e.target); e.target.textContent = on ? '· Following' : '· Follow'; });

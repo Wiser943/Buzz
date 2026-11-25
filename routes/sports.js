@@ -7,6 +7,7 @@ const Prediction = require('../models/Prediction');
 const { POINTS } = require('../services/sports.service');
 router.get('/matches', optionalAuth, async (req, res, next) => {
   try {
+    require('../services/fixtures').sync().catch(() => {});
     const matches = await Match.find().sort({ kickoff: -1 }).limit(60).lean();
     const mine = req.user ? await Prediction.find({ user: req.user._id, match: { $in: matches.map(m => m._id) } }).lean() : [];
     const by = new Map(mine.map(p => [String(p.match), p]));

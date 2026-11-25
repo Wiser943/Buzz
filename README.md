@@ -94,3 +94,14 @@ Live updates (SSE), search, real stories, reposts, comment voting + karma, commu
 - Phone alerts while the app is *closed* need Web Push (VAPID keys + the `web-push` package); the service worker already handles push events.
 - Rate limiting is in-memory (single server). Move to Redis if you run several instances.
 - Charts rank by plays + 5×likes, all-time.
+
+## Stage 17-19 additions
+- **Accounts:** password reset and email verification (Brevo or Resend), change password, delete account, data export.
+- **Settings:** notification toggles, message privacy, streak visibility, blocked users, help, Terms and Privacy pages.
+- **Feed:** For you / Following tabs, infinite scroll, @mentions, tappable #hashtags, edit post, share previews (Open Graph).
+- **Inbox:** search, filters, group chats (up to 200), Buzzer AI (Gemini).
+- **Karma Achievements, Professional Dashboard** (post views are counted when a post page is opened by someone other than the author).
+- **Predictions:** fixtures and results sync from football-data.org every 30 minutes and settle automatically.
+- **Games:** penalty shootout and football quiz (server decides results; daily point cap).
+- **Opportunities hub:** categories, cover images, price, spots.
+- Audio/video storage is intentionally unchanged (still local disk / UPLOAD_DIR) and will be planned later.

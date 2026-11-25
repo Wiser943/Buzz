@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { normalizeUsername, validUsername, validEmail } = require('../utils/validators');
 function publicUser(user) {
-  return { id: user._id, username: user.username, displayName: user.displayName, email: user.email, avatarUrl: user.avatarUrl, coverUrl: user.coverUrl, bio: user.bio, isVerified: user.isVerified, role: user.role, karma: user.karma, subscription: user.subscription, avatarSettings: user.avatarSettings };
+  return { id: user._id, username: user.username, displayName: user.displayName, email: user.email, avatarUrl: user.avatarUrl, coverUrl: user.coverUrl, bio: user.bio, isVerified: user.isVerified, role: user.role, emailVerified: !!user.emailVerified, settings: user.settings || {}, proDashboard: !!user.proDashboard, karma: user.karma, subscription: user.subscription, avatarSettings: user.avatarSettings };
 }
 function tokenFor(user) { return jwt.sign({ sub: user._id.toString() }, process.env.JWT_SECRET, { expiresIn: '7d' }); }
 async function register(input) {

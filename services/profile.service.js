@@ -4,14 +4,15 @@ const notify = require('./notify');
 const { view: streakView } = require('./streak');
 
 const publicFields = 'username displayName avatarUrl coverUrl bio isVerified role karma subscription.plan subscription.status avatarSettings createdAt streak';
-async function getProfile(username) {
-  const user = await User.findOne({ username: String(username).toLowerCase() }).select(publicFields);
+async function getProfile(username, self = false) {
+  const user = await User.findOne({ username: String(username).toLowerCase() }).select(publicFields + ' settings.privacy.showStreak' + (self ? ' emailVerified proDashboard' : ''));
   if (!user) return null;
   const [followers, following] = await Promise.all([
     Follow.countDocuments({ following: user._id }),
     Follow.countDocuments({ follower: user._id })
   ]);
-  return { user: { ...user.toObject(), streak: streakView(user.streak) }, stats: { followers, following } };
+  const o = user.toObject(), hide = !self && o.settings?.privacy?.showStreak === false; delete o.settings;
+  return { user: { ...o, streak: hide ? null : streakView(user.streak) }, stats: { followers, following } };
 }
 async function updateProfile(userId, data) {
   const allowed = ['displayName', 'bio', 'avatarUrl', 'coverUrl', 'avatarSettings'];

@@ -14,6 +14,8 @@ const postSchema = new mongoose.Schema({
   pinned: { type: Boolean, default: false },
   threadRoot: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', default: null, index: true },
   threadCount: { type: Number, default: 0 },
+  views: { type: Number, default: 0 },
+  editedAt: { type: Date, default: null },
   community: { type: mongoose.Schema.Types.ObjectId, ref: 'Community', default: null, index: true }
 }, { timestamps: true });
 module.exports = mongoose.model('Post', postSchema);

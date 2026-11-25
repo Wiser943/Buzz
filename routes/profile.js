@@ -4,7 +4,7 @@ const optionalAuth = require('../middleware/optionalAuth');
 const profileService = require('../services/profile.service');
 
 router.get('/me', auth, async (req, res) => {
-  const profile = await profileService.getProfile(req.user.username);
+  const profile = await profileService.getProfile(req.user.username, true);
   res.json({ ...profile, isFollowing: false });
 });
 router.patch('/me', auth, async (req, res) => {

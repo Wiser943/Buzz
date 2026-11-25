@@ -7,6 +7,8 @@ const optionalAuth = require('../middleware/optionalAuth');
 const Block = require('../models/Block');
 const notify = require('../services/notify');
 const streak = require('../services/streak');
+const Follow = require('../models/Follow');
+const { notifyMentions } = require('../services/mentions');
 const rateLimit = require('../middleware/rateLimit');
 const Membership = require('../models/Membership');
 const User = require('../models/User');
@@ -20,18 +22,26 @@ router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 50);
     const query = { status: 'published', visibility: 'public', threadRoot: null };
-    if (req.user) { const hidden = (await Block.find({ $or: [{ blocker: req.user._id }, { blocked: req.user._id }] })).map(b => String(b.blocker) === String(req.user._id) ? b.blocked : b.blocker); if (hidden.length) query.author = { $nin: hidden }; }
+    let hidden = [];
+    if (req.user) { hidden = (await Block.find({ $or: [{ blocker: req.user._id }, { blocked: req.user._id }] })).map(b => String(b.blocker) === String(req.user._id) ? b.blocked : b.blocker); if (hidden.length) query.author = { $nin: hidden }; }
+    if (req.query.feed === 'following') {
+      if (!req.user) return res.status(401).json({ error: 'Log in to see posts from people you follow.' });
+      const hide = new Set(hidden.map(String));
+      const ids = (await Follow.find({ follower: req.user._id }).select('following')).map(f => f.following).concat(req.user._id).filter(id => !hide.has(String(id)));
+      query.author = { $in: ids };
+    }
     if (req.query.before && mongoose.isValidObjectId(req.query.before)) query._id = { $lt: req.query.before };
     if (mongoose.isValidObjectId(req.query.community)) query.community = req.query.community;
-    const posts = (await Post.find(query).sort({ _id: -1 }).limit(limit).populate(populateAuthor).populate(populateRepost)).filter(visible);
-    res.json({ posts, nextCursor: posts.length === limit ? posts[posts.length - 1]._id : null });
+    const raw = await Post.find(query).sort({ _id: -1 }).limit(limit).populate(populateAuthor).populate(populateRepost);
+    res.json({ posts: raw.filter(visible), nextCursor: raw.length === limit ? raw[raw.length - 1]._id : null });
   } catch (err) { next(err); }
 });
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', optionalAuth, async (req, res, next) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Invalid post id.' });
     const post = await Post.findById(req.params.id).populate(populateAuthor).populate(populateRepost);
     if (!post || post.status !== 'published') return res.status(404).json({ error: 'Post not found.' });
+    if (req.query.view === '1' && !(req.user && post.author && String(post.author._id) === String(req.user._id))) Post.updateOne({ _id: post._id }, { $inc: { views: 1 } }).catch(() => {});
     res.json({ post });
   } catch (err) { next(err); }
 });
@@ -58,7 +68,7 @@ router.post('/', auth, rateLimit({ windowMs: 3600e3, max: 40, by: 'user', messag
     }
     const post = await Post.create({ author: req.user._id, text: cleanText, media, mediaType, community, threadRoot: root ? root._id : null });
     if (root) await Post.updateOne({ _id: root._id }, { $inc: { threadCount: 1 } });
-    streak.touch(req.user._id);
+    streak.touch(req.user._id); notifyMentions(cleanText, req.user._id, post._id);
     await autoReport({ targetType: 'post', targetUser: req.user._id, targetPost: post._id, flags: sc.flags });
     await post.populate(populateAuthor);
     res.status(201).json({ post });
@@ -106,6 +116,21 @@ router.post('/:id/pin', auth, async (req, res, next) => {
     res.json({ pinned: post.pinned });
   } catch (err) { next(err); }
 });
+router.patch('/:id', auth, async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Invalid post id.' });
+    const post = await Post.findById(req.params.id);
+    if (!post || post.status !== 'published' || post.isRepost) return res.status(404).json({ error: 'Post not found.' });
+    if (!post.author.equals(req.user._id)) return res.status(403).json({ error: 'You can only edit your own posts.' });
+    const text = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
+    if (text.length > 5000) return res.status(400).json({ error: 'Post is too long.' });
+    if (!text && !(post.media || []).length) return res.status(400).json({ error: 'A post needs text or media.' });
+    if (scan(text).reject) return res.status(400).json({ error: 'Your post contains disallowed words.' });
+    post.text = text; post.editedAt = new Date(); await post.save();
+    notifyMentions(text, req.user._id, post._id);
+    res.json({ post });
+  } catch (err) { next(err); }
+});
 router.delete('/:id', auth, async (req, res, next) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ error: 'Invalid post id.' });
@@ -151,7 +176,7 @@ router.post('/:id/comments', auth, rateLimit({ windowMs: 600e3, max: 40, by: 'us
     const comment = await Comment.create({ post: post._id, author: req.user._id, text });
     post.commentsCount += 1;
     await post.save();
-    streak.touch(req.user._id);
+    streak.touch(req.user._id); notifyMentions(text, req.user._id, post._id);
     await notify(post.author, { type: 'comment', actor: req.user._id, post: post._id, text: text.slice(0, 80) });
     await comment.populate('author', 'username displayName avatarUrl isVerified');
     res.status(201).json({ comment, commentsCount: post.commentsCount });

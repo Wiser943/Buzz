@@ -34,7 +34,9 @@ router.post('/', auth, rateLimit({ windowMs: 3600e3, max: 5, by: 'user' }), asyn
     let link = ''; if (b.link) { try { const u = new URL(String(b.link)); if (u.protocol !== 'https:') throw 0; link = u.href; } catch { return res.status(400).json({ error: 'The link must start with https://' }); } }
     const deadline = b.deadline && !isNaN(Date.parse(b.deadline)) ? new Date(b.deadline) : undefined;
     const s = scan(title, description, b.location); if (s.reject) return res.status(400).json({ error: 'Your text contains disallowed words.' });
-    const o = await Opportunity.create({ poster: req.user._id, type: b.type, title, description, location: String(b.location || '').trim().slice(0, 80), deadline, link });
+    let coverUrl = ''; if (b.coverUrl) { try { const u = new URL(String(b.coverUrl)); if (u.protocol !== 'https:') throw 0; coverUrl = u.href; } catch { return res.status(400).json({ error: 'The cover image must be an https:// link (upload it as a post image first).' }); } }
+    const spots = Number.isInteger(Number(b.spots)) && Number(b.spots) > 0 ? Number(b.spots) : null, startsAt = b.startsAt && !isNaN(Date.parse(b.startsAt)) ? new Date(b.startsAt) : undefined;
+    const o = await Opportunity.create({ poster: req.user._id, type: b.type, title, description, location: String(b.location || '').trim().slice(0, 80), deadline, link, coverUrl, fee: String(b.fee || '').trim().slice(0, 40), spots, startsAt, sport: String(b.sport || '').trim().slice(0, 40) });
     await autoReport({ targetType: 'user', targetUser: req.user._id, flags: s.flags });
     res.status(201).json({ opportunity: o, message: 'Submitted for review. It goes live once approved.' });
   } catch (e) { next(e); }

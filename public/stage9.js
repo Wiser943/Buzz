@@ -44,9 +44,13 @@ document.addEventListener('click', e => {
 async function ownPostSheet(id) {
   let post; try { post = (await api('/api/posts/' + id)).post; } catch (e) { return notify(e.message); }
   const url = location.origin + '/post/' + id;
-  sheet(`<div class="sh-pair"><button id="opChat" class="sh-tile">${ico('forward')}<small>Share Post in Chat</small></button><button id="opShare" class="sh-tile">${ico('share-2')}<small>Share</small></button></div><div class="sh-group">${item('opStory', 'circle-fading-plus', 'Add to your story')}${item('opLikes', 'heart', 'View Reactions')}${item('opCmts', 'message-circle', 'View Comments')}${item('opPin', 'pin', post.pinned ? 'Unpin from main grid' : 'Pin to main grid')}${item('opTr', 'languages', 'Translate Description')}</div><div class="sh-group">${item('opDel', 'trash-2', 'Delete Post', 1)}</div>`);
+  sheet(`<div class="sh-pair"><button id="opChat" class="sh-tile">${ico('forward')}<small>Share Post in Chat</small></button><button id="opShare" class="sh-tile">${ico('share-2')}<small>Share</small></button></div><div class="sh-group">${post.isRepost ? '' : item('opEdit', 'pencil', 'Edit post')}${item('opStory', 'circle-fading-plus', 'Add to your story')}${item('opLikes', 'heart', 'View Reactions')}${item('opCmts', 'message-circle', 'View Comments')}${item('opPin', 'pin', post.pinned ? 'Unpin from main grid' : 'Pin to main grid')}${item('opTr', 'languages', 'Translate Description')}</div><div class="sh-group">${item('opDel', 'trash-2', 'Delete Post', 1)}</div>`);
   $('#opShare').onclick = () => { closeSheets(); navigator.share ? navigator.share({ url }).catch(() => {}) : navigator.clipboard?.writeText(url).then(() => notify('Link copied')); };
   $('#opCmts').onclick = () => render('post', id);
+  $('#opEdit')?.addEventListener('click', () => {
+    sheet(`<h3 class="sh-title">Edit post</h3><textarea id="epText" class="sh-text" maxlength="5000">${esc(post.text || '')}</textarea><button class="purchase" id="epSave">Save changes</button>`);
+    $('#epSave').onclick = async () => { try { const d = await api('/api/posts/' + id, 'PATCH', { text: $('#epText').value }); closeSheets(); notify('Post updated'); document.querySelectorAll(`[data-post="${id}"]`).forEach(b => { const a = b.closest('article'); if (!a) return; let p = a.querySelector('.post-text'); if (!p && d.post.text) { p = document.createElement('p'); p.className = 'post-text'; p.dataset.open = id; a.querySelector('.post-head')?.after(p); } if (p) { d.post.text ? p.innerHTML = rich(d.post.text) : p.remove(); } const sm = a.querySelector('.post-head small'); if (sm && !sm.textContent.includes('edited')) sm.textContent += ' · edited'; }); } catch (e) { notify(e.message); } };
+  });
   $('#opChat').onclick = async () => {
     try {
       const { users } = await api('/api/messages/contacts');
@@ -109,7 +113,7 @@ screens.sports = {
 };
 
 /* ---------- Notifications ---------- */
-const NT = { like: 'liked your post', comment: 'commented on your post', follow: 'started following you', repost: 'reposted your post' };
+const NT = { mention: 'mentioned you', like: 'liked your post', comment: 'commented on your post', follow: 'started following you', repost: 'reposted your post' };
 const SYS_TYPES = ['moderation', 'takedown', 'appeal', 'system', 'verification', 'payment', 'opportunity'];
 const SYS_ICON = { moderation: 'triangle-alert', takedown: 'triangle-alert', verification: 'badge-check', payment: 'badge-check', appeal: 'scale', opportunity: 'briefcase', system: 'bell' };
 screens.notifications = {

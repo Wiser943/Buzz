@@ -7,6 +7,8 @@ const S = new mongoose.Schema({
   status: { type: String, enum: ['upcoming', 'finished'], default: 'upcoming' },
   homeScore: { type: Number, default: null },
   awayScore: { type: Number, default: null },
+  externalId: { type: String, index: true, unique: true, sparse: true },
+  source: { type: String, default: 'manual' },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 module.exports = mongoose.model('Match', S);

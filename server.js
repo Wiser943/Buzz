@@ -18,6 +18,10 @@ app.get('/api/health', (_req, res) => {
   res.json({ app: 'Buzzer', status: 'running', database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' });
 });
 const rateLimit = require('./middleware/rateLimit');
+app.use('/', require('./routes/share'));
+app.use('/api/account', require('./routes/account'));
+app.use('/api/ai', require('./routes/ai'));
+app.use('/api/games', require('./routes/games'));
 app.use('/api/auth', rateLimit({ windowMs: 15 * 60000, max: 40, message: 'Too many attempts. Try again in a few minutes.' }), require('./routes/auth'));
 app.use('/api/stream', require('./routes/stream'));
 app.use('/api/search', rateLimit({ max: 60 }), require('./routes/search'));
@@ -48,6 +52,7 @@ if (process.env.MONGODB_URI) {
     const emails = (process.env.ADMIN_EMAILS || '').toLowerCase().split(',').map(x => x.trim()).filter(Boolean);
     if (emails.length) await require('./models/User').updateMany({ email: { $in: emails } }, { role: 'admin' });
     const ps = require('./services/paystack.service');
+    const fx = require('./services/fixtures'); setTimeout(() => fx.sync(true), 8000).unref(); setInterval(() => fx.sync(), 30 * 60e3).unref();
     await ps.expireBadges(); setInterval(() => ps.expireBadges().catch(e => console.error(e.message)), 3600e3).unref();
   }).catch(err => { console.error('MongoDB connection failed:', err.message); process.exitCode = 1; });
 } else {

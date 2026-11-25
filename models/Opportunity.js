@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { ObjectId } = mongoose.Schema.Types;
-const TYPES = ['trial', 'tournament', 'job', 'sponsorship', 'event', 'education', 'talent'];
+const TYPES = ['trial', 'tournament', 'discount', 'job', 'sponsorship', 'event', 'education', 'talent'];
 const S = new mongoose.Schema({
   poster: { type: ObjectId, ref: 'User', required: true, index: true },
   type: { type: String, enum: TYPES, required: true },
@@ -9,6 +9,11 @@ const S = new mongoose.Schema({
   location: { type: String, trim: true, maxlength: 80, default: '' },
   deadline: Date,
   link: { type: String, maxlength: 500, default: '' },
+  coverUrl: { type: String, maxlength: 500, default: '' },
+  fee: { type: String, trim: true, maxlength: 40, default: '' },
+  spots: { type: Number, min: 0, max: 100000, default: null },
+  startsAt: Date,
+  sport: { type: String, trim: true, maxlength: 40, default: '' },
   status: { type: String, enum: ['pending', 'approved', 'rejected', 'closed'], default: 'pending', index: true },
   promoted: { type: Boolean, default: false },
   reviewNote: { type: String, maxlength: 300, default: '' },
