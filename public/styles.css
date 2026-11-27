@@ -709,3 +709,223 @@ body[data-view=post] .sub-head .ph-name b{font-size:15px}body[data-view=post] .s
   :root{--rbw:0px}
   .rightbar{display:none!important}
 }
+
+/* ===== STAGE 21: STEM LEARNING, LABS & NKWADAA-STYLE SEARCH STYLING ===== */
+body[data-view=learn] .main-content>*,
+body[data-view=labs] .main-content>*,
+body[data-view=lab] .main-content>*,
+body[data-view=lesson] .main-content>*,
+body[data-view=stemSearch] .main-content>*,
+body[data-view=search] .main-content>*{max-width:920px}
+
+/* Nkwadaa STEM Search Screen */
+.stem-search-screen{position:relative;padding:12px 6px 40px;min-height:80vh}
+.stem-search-hero{text-align:left;margin-bottom:28px;position:relative;background:radial-gradient(circle at 80% 20%,rgba(24,217,120,0.06),transparent 65%),radial-gradient(circle at 20% 80%,rgba(54,88,255,0.05),transparent 60%);border-radius:20px;padding:32px 24px;border:1px solid #1f2326}
+.nkwadaa-title{font-size:36px;font-weight:900;letter-spacing:-1px;margin:0 0 6px;color:#fff}
+.nkwadaa-sub{font-size:14px;color:#8f9995;margin:0 0 24px}
+.nkwadaa-search-bar{position:relative;display:flex;align-items:center;background:#0d0f11;border:1px solid #282f34;border-radius:28px;padding:4px 18px;height:52px;box-shadow:0 8px 30px rgba(0,0,0,0.5);transition:border-color .2s,box-shadow .2s}
+.nkwadaa-search-bar:focus-within{border-color:#18d978;box-shadow:0 0 0 3px rgba(24,217,120,0.18)}
+.nkwadaa-s-icon{width:20px;height:20px;color:#71767b;margin-right:12px;flex-shrink:0}
+.nkwadaa-search-bar input{background:transparent;border:0;outline:0;color:#f7f8f8;font-size:15px;width:100%}
+.nkwadaa-search-bar input::placeholder{color:#555d61}
+.nkwadaa-clear{background:transparent;border:0;color:#888;font-size:22px;cursor:pointer;padding:0 6px}
+.nkwadaa-clear:hover{color:#fff}
+
+.nkwadaa-try-row{display:flex;align-items:flex-start;gap:12px;margin-top:20px;flex-wrap:wrap}
+.try-label{font-size:11px;font-weight:900;letter-spacing:1.5px;color:#71767b;margin-top:7px}
+.try-chips{display:flex;gap:8px;flex-wrap:wrap}
+.try-chip{background:#14171a;border:1px solid #272d32;color:#c0c9c5;font-size:12px;padding:6px 14px;border-radius:20px;transition:all .18s;cursor:pointer}
+.try-chip:hover{border-color:#18d978;color:#18d978;background:#101d16;transform:translateY(-1px)}
+
+.stem-tabs-bar{margin:18px 0 22px}
+.stem-results-body{display:grid;gap:24px}
+.s-sec-title{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:#18d978;margin-bottom:14px;text-transform:uppercase;letter-spacing:1px}
+.nkwadaa-idle-hint{text-align:center;padding:40px 10px;color:#71767b;font-size:14px}
+.nkwadaa-empty-state{text-align:center;padding:50px 20px;color:#71767b;background:#0d0f11;border-radius:16px;border:1px solid #1f2326}
+.nkwadaa-empty-state i{width:36px;height:36px;margin-bottom:12px;color:#444}
+.nkwadaa-empty-state h3{color:#eee;margin:0 0 6px}
+
+/* Learn Academy Header & Cards */
+.stem-hero-header{margin-bottom:24px}
+.stem-badge-row{display:flex;gap:8px;margin-bottom:12px}
+.stem-pill-badge{font-size:11px;font-weight:800;letter-spacing:.8px;padding:4px 10px;border-radius:12px;background:rgba(24,217,120,0.12);color:#18d978;border:1px solid rgba(24,217,120,0.3);display:inline-flex;align-items:center;gap:6px}
+.stem-pill-badge.muted-pill{background:#181c1f;color:#8f9995;border-color:#2a3136}
+.stem-pill-badge.green-pill{background:rgba(24,217,120,0.15);color:#18d978;border-color:#18d978}
+.stem-main-title{font-size:28px;font-weight:900;letter-spacing:-.5px;margin:0 0 8px;color:#fff}
+.stem-lead{font-size:14px;color:#9da5a2;line-height:1.6;margin:0 0 20px;max-width:720px}
+
+.stem-filter-chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.stem-chip{background:#111416;border:1px solid #262c30;color:#c0c9c5;font-size:12px;font-weight:700;padding:8px 16px;border-radius:20px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:all .18s;cursor:pointer}
+.stem-chip:hover{border-color:#555;color:#fff}
+.stem-chip.active{background:#fff;border-color:#fff;color:#000;font-weight:850}
+
+.stem-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.stem-lesson-card{background:#0e1112;border:1px solid #23292d;border-radius:16px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;transition:border-color .2s,transform .2s;cursor:pointer}
+.stem-lesson-card:hover{border-color:#18d978;transform:translateY(-2px)}
+.slc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.slc-category{font-size:11px;font-weight:800;color:#18d978;text-transform:uppercase;letter-spacing:1px}
+.slc-time{font-size:11px;color:#71767b;display:inline-flex;align-items:center;gap:4px}
+.slc-title{font-size:16px;font-weight:800;line-height:1.35;margin:0 0 8px;color:#fff}
+.slc-summary{font-size:12px;color:#8f9995;line-height:1.55;margin:0 0 16px;flex-grow:1}
+.slc-footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1c2225;padding-top:12px}
+.slc-level{font-size:11px;font-weight:700;color:#f3c642;background:rgba(243,198,66,0.1);padding:3px 8px;border-radius:6px}
+
+.stem-btn-primary{background:#18d978;color:#04150b;font-weight:850;font-size:12px;padding:8px 16px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;transition:background .2s}
+.stem-btn-primary:hover{background:#20f087}
+.stem-btn-primary.sm-btn{padding:6px 12px;font-size:11px}
+.stem-btn-glow{background:#18d978;color:#04150b;font-weight:900;font-size:12px;padding:9px 18px;border-radius:12px;box-shadow:0 0 20px rgba(24,217,120,0.3);display:inline-flex;align-items:center;gap:6px}
+.stem-btn-glow:hover{box-shadow:0 0 26px rgba(24,217,120,0.5)}
+
+/* Article Reader */
+.stem-article-container{background:#0e1112;border:1px solid #23292d;border-radius:20px;padding:28px 24px;margin-top:10px}
+.sac-meta{display:flex;gap:8px;font-size:12px;color:#71767b;margin-bottom:12px}
+.sac-title{font-size:26px;font-weight:900;line-height:1.25;margin:0 0 10px;color:#fff}
+.sac-summary{font-size:14px;color:#9da5a2;line-height:1.6;margin:0 0 22px;border-left:3px solid #18d978;padding-left:14px}
+.stem-lab-banner{background:linear-gradient(135deg,#0a291a,#0d1512);border:1px solid #195232;border-radius:14px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:16px}
+.slb-info strong{display:flex;align-items:center;gap:8px;font-size:14px;color:#18d978;margin-bottom:3px}
+.slb-info span{font-size:12px;color:#aab2ae}
+
+.sac-body{line-height:1.75;color:#d8dedb;font-size:14px;margin-bottom:30px}
+.stem-h1{font-size:22px;font-weight:850;color:#fff;margin:24px 0 12px}
+.stem-h2{font-size:19px;font-weight:800;color:#fff;margin:20px 0 10px}
+.stem-h3{font-size:16px;font-weight:800;color:#18d978;margin:18px 0 8px}
+.stem-p{margin:0 0 14px}
+.stem-ul{padding-left:20px;margin:0 0 16px}
+.stem-li{margin-bottom:6px}
+.stem-math-block{background:#080a0a;border:1px solid #20272b;border-radius:10px;padding:14px 18px;margin:14px 0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;color:#18d978;overflow-x:auto}
+.stem-math-inline{background:#161c19;color:#18d978;padding:2px 6px;border-radius:5px;font-size:12px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+
+/* Concept Quiz Box */
+.stem-quiz-box{background:#121617;border:1px solid #273034;border-radius:16px;padding:20px;margin:28px 0}
+.sqb-header h3{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:16px;color:#fff}
+.sqb-header small{color:#8f9995;font-size:12px;display:block;margin-bottom:16px}
+.quiz-question-block{border-top:1px solid #22292d;padding-top:16px;margin-top:16px}
+.qq-title{font-size:13px;font-weight:750;color:#eee;margin:0 0 12px}
+.qq-options{display:grid;gap:8px}
+.qq-option{background:#181d20;border:1px solid #2b3337;color:#d0d7d4;border-radius:9px;padding:10px 14px;text-align:left;font-size:13px;transition:all .15s}
+.qq-option:hover:not(:disabled){border-color:#18d978;background:#13241b;color:#fff}
+.qq-option.correct{background:#0b3820;border-color:#18d978;color:#fff;font-weight:800}
+.qq-option.wrong{background:#3b1318;border-color:#f71948;color:#fff}
+.qq-feedback{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.5}
+.qq-feedback.correct{background:rgba(24,217,120,0.1);border:1px solid #18d978;color:#20f087}
+.qq-feedback.wrong{background:rgba(247,25,72,0.1);border:1px solid #f71948;color:#ff6b85}
+.sac-footer-nav{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid #23292d;padding-top:20px;margin-top:24px}
+
+/* Virtual Labs Grid */
+.stem-lab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.stem-lab-grid.mini-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.stem-lab-card{background:#0e1112;border:1px solid #23292d;border-radius:18px;padding:20px;display:flex;gap:16px;transition:all .2s;cursor:pointer}
+.stem-lab-card:hover{border-color:#18d978;box-shadow:0 10px 30px rgba(0,0,0,0.5);transform:translateY(-2px)}
+.stem-lab-card.compact{padding:14px;gap:12px}
+.slb-icon-wrap{width:48px;height:48px;border-radius:14px;background:rgba(24,217,120,0.1);border:1px solid rgba(24,217,120,0.25);color:#18d978;display:grid;place-items:center;flex-shrink:0}
+.slb-icon-wrap i{width:24px;height:24px}
+.slb-content{flex-grow:1}
+.slb-tags{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.slc-difficulty{font-size:10px;color:#aab2ae;background:#181c1e;padding:2px 7px;border-radius:5px}
+.slb-content h3{font-size:16px;font-weight:800;color:#fff;margin:0 0 6px}
+.slb-content p{font-size:12px;color:#8f9995;line-height:1.5;margin:0 0 12px}
+.slb-concepts{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
+.slb-concepts span{font-size:10px;color:#8f9995;background:#15181a;border:1px solid #262c30;padding:2px 7px;border-radius:4px}
+
+/* Interactive Lab Workspace */
+.stem-lab-workspace{background:#0e1112;border:1px solid #23292d;border-radius:20px;padding:22px;margin-top:10px}
+.slw-header{margin-bottom:18px;border-bottom:1px solid #1f2528;padding-bottom:14px}
+.slw-header h2{font-size:22px;font-weight:900;color:#fff;margin:4px 0 6px}
+.slw-header p{color:#8f9995;font-size:13px;margin:0}
+
+/* Neural Network Lab Layout */
+.neural-lab-layout{display:grid;grid-template-columns:1fr 280px;gap:20px}
+.canvas-panel{background:#080a0a;border:1px solid #20272b;border-radius:14px;padding:14px}
+.canvas-header-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:12px;color:#8f9995;flex-wrap:wrap;gap:8px}
+.canvas-tools{display:flex;gap:6px}
+.tool-btn{background:#14171a;border:1px solid #272d32;color:#eee;font-size:11px;padding:5px 10px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.tool-btn.active{border-color:#18d978;background:#102217;color:#18d978;font-weight:800}
+.tool-btn.danger:hover{border-color:#f71948;color:#f71948}
+.dot-green{width:8px;height:8px;border-radius:50%;background:#18d978;display:inline-block}
+.dot-gold{width:8px;height:8px;border-radius:50%;background:#f3c642;display:inline-block}
+.canvas-wrap{width:100%;display:grid;place-items:center;background:#050607;border-radius:10px;overflow:hidden;border:1px solid #191e21}
+.canvas-wrap canvas{max-width:100%;height:auto;display:block;cursor:crosshair}
+.canvas-legend{display:flex;justify-content:space-between;font-size:10px;color:#71767b;margin-top:8px}
+
+.controls-panel{background:#121617;border:1px solid #232b2f;border-radius:14px;padding:16px}
+.controls-panel h3{font-size:14px;font-weight:800;color:#fff;margin:0 0 14px}
+.param-row{margin-bottom:14px}
+.param-row label{display:flex;justify-content:space-between;font-size:12px;color:#aab2ae;margin-bottom:6px}
+.param-row input[type=range]{width:100%;accent-color:#18d978}
+.stats-box{background:#0a0c0d;border:1px solid #1f2528;border-radius:10px;padding:10px;margin-bottom:14px}
+.stat-item{display:flex;justify-content:space-between;font-size:11px;color:#8f9995;padding:3px 0}
+.stat-item strong{color:#18d978;font-size:12px}
+.control-actions{display:grid;gap:8px;margin-bottom:14px}
+.formula-card{background:#0a0c0d;border:1px solid #1f2528;border-radius:10px;padding:10px;font-size:11px;color:#8f9995;line-height:1.5}
+.formula-card code{color:#18d978;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;display:block;margin-top:4px}
+.full-w{width:100%;justify-content:center}
+
+/* Ohm's Law Circuit Visualizer */
+.ohms-lab-layout{display:grid;grid-template-columns:1fr 280px;gap:20px}
+.circuit-visual-box{background:#080a0a;border:1px solid #20272b;border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:space-between}
+.circuit-stage{position:relative;height:240px;border:3px dashed #283338;border-radius:14px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-around}
+.circuit-battery{background:#1b2326;border:2px solid #36444b;border-radius:8px;padding:12px;text-align:center;width:75px}
+.bat-head{color:#18d978;font-weight:900;font-size:16px}
+.bat-foot{color:#f71948;font-weight:900;font-size:16px}
+.circuit-bulb{position:relative;text-align:center;width:60px}
+.bulb-glow{position:absolute;inset:-15px;border-radius:50%;background:#f3c642;filter:blur(18px);opacity:.3;pointer-events:none}
+.bulb-glass{font-size:32px;color:#f3c642;position:relative;z-index:2}
+.bulb-glass i{width:36px;height:36px}
+.circuit-resistor{background:#181d20;border:2px solid #3a474d;border-radius:8px;padding:8px 12px;text-align:center}
+.circuit-readings{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.meter-box{background:#0e1214;border:1px solid #252e33;border-radius:10px;padding:12px;text-align:center}
+.meter-box small{font-size:10px;color:#71767b;letter-spacing:1px}
+.meter-val{font-size:24px;font-weight:900;color:#18d978;margin:4px 0}
+.meter-val small{font-size:14px;color:#8f9995}
+
+/* Optics Lab */
+.optics-lab-layout{display:grid;grid-template-columns:1fr 280px;gap:20px}
+.optics-canvas-wrap{background:#080a0a;border:1px solid #20272b;border-radius:14px;overflow:hidden;display:grid;place-items:center}
+.optics-canvas-wrap canvas{max-width:100%;height:auto;display:block}
+.stem-select{width:100%;background:#090b0c;border:1px solid #2b3337;color:#fff;border-radius:8px;padding:8px 10px;outline:0}
+
+/* Osmosis Lab */
+.osmosis-lab-layout{display:grid;grid-template-columns:1fr 280px;gap:20px}
+.osmosis-view{background:#080a0a;border:1px solid #20272b;border-radius:14px;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.beaker{width:220px;height:240px;border:4px solid #3c4b52;border-top:0;border-radius:0 0 30px 30px;background:#0d1214;position:relative;overflow:hidden;display:grid;place-items:center}
+.solution-liquid{position:absolute;inset:20px 0 0 0;transition:background .4s;display:grid;place-items:center}
+.osmosis-cell{width:110px;height:110px;border-radius:14px;position:relative;transition:all .5s cubic-bezier(.34,1.56,.64,1);display:grid;place-items:center}
+.plant-cell{border:4px solid #198c4e;background:#0d3d22}
+.animal-cell{border:3px solid #b32d3d;background:#5e1822;border-radius:50%}
+.osmosis-cell.hypotonic.plant-cell{transform:scale(1.15)}
+.osmosis-cell.hypotonic.animal-cell{transform:scale(1.28);border-color:#ff334b}
+.osmosis-cell.hypertonic.plant-cell{transform:scale(0.85)}
+.osmosis-cell.hypertonic.animal-cell{transform:scale(0.72);border-radius:35%}
+.cell-status-bar{margin-top:16px;font-size:13px;color:#18d978}
+
+/* Logic Gates Lab */
+.logic-lab-layout{display:grid;grid-template-columns:1fr 280px;gap:20px}
+.logic-stage-card{background:#080a0a;border:1px solid #20272b;border-radius:14px;padding:24px;display:flex;align-items:center;justify-content:space-around}
+.circuit-inputs{display:grid;gap:16px}
+.input-toggle{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:#8f9995}
+.bit-btn{width:48px;height:48px;border-radius:10px;background:#161a1c;border:2px solid #2d3539;color:#71767b;font-size:18px;font-weight:900;cursor:pointer;transition:all .15s}
+.bit-btn.on{background:#0e3620;border-color:#18d978;color:#18d978;box-shadow:0 0 14px rgba(24,217,120,0.3)}
+.gate-symbol{width:90px;height:90px;border-radius:18px;background:linear-gradient(135deg,#1b252b,#0c1316);border:2px solid #334047;display:grid;place-items:center;font-size:18px;font-weight:900;color:#fff}
+.circuit-output{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:#8f9995}
+.led-light{width:50px;height:50px;border-radius:50%;background:#181c1e;border:2px solid #2b3337;display:grid;place-items:center;position:relative;color:#71767b;font-size:18px;font-weight:900}
+.led-light.active{background:#0f3821;border-color:#18d978;color:#18d978;box-shadow:0 0 25px rgba(24,217,120,0.5)}
+.gate-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.truth-table-card{margin-top:14px}
+.truth-table{width:100%;border-collapse:collapse;font-size:12px;text-align:center}
+.truth-table th{background:#0a0d0e;color:#8f9995;padding:6px;border:1px solid #20272b}
+.truth-table td{padding:6px;border:1px solid #1a2023;color:#ccc}
+.truth-table tr.active-row td{background:#0c2818;color:#18d978;font-weight:800}
+
+/* Sandbox Playground */
+.sandbox-layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.sandbox-editor-panel,.sandbox-console-panel{background:#080a0a;border:1px solid #20272b;border-radius:14px;padding:16px;display:flex;flex-direction:column}
+.sb-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:13px;font-weight:800;color:#fff;gap:10px}
+.code-editor-area{width:100%;background:#040505;border:1px solid #1b2124;border-radius:8px;color:#18d978;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;padding:12px;outline:0;resize:vertical;line-height:1.6}
+.sb-actions{display:flex;gap:10px;margin-top:12px}
+.console-title{font-size:12px;font-weight:800;color:#8f9995;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.console-pre{flex-grow:1;background:#030404;border:1px solid #181d20;border-radius:8px;padding:12px;color:#c0c9c5;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-y:auto;min-height:220px}
+
+@media(max-width:900px){
+  .neural-lab-layout,.ohms-lab-layout,.optics-lab-layout,.osmosis-lab-layout,.logic-lab-layout,.sandbox-layout{grid-template-columns:1fr}
+  .nkwadaa-title{font-size:28px}
+}

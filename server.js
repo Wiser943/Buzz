@@ -42,6 +42,8 @@ app.use('/api/safety', require('./routes/safety'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/ads', require('./routes/ads'));
 app.use('/api/uploads', require('./routes/uploads'));
+app.use('/api/learn', require('./routes/learn'));
+app.use('/api/labs', require('./routes/labs'));
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(err.status || 500).json({ error: 'Unexpected server error.' });
