@@ -671,3 +671,41 @@ body[data-view=post] .sub-head .ph-name b{font-size:15px}body[data-view=post] .s
   .media-wrap{margin-left:0;margin-right:0}.thread-pill{margin-left:0}
   .post-detail .media-wrap{max-width:520px;margin-left:0}
 }
+
+/* ===== Stage 21: desktop layout = centered 3-column app (sidebar | feed | right rail) with side margins ===== */
+@media(min-width:901px){
+  :root{--cw:1296px;--cl:max(0px,calc((100vw - 1296px) / 2));--sbw:228px;--rbw:324px;--tb:52px}
+  html,body{background:#000}
+  .topbar{height:var(--tb);padding:0 calc(var(--cl) + 12px);gap:14px;background:#000;border-bottom:1px solid #1b1e20}
+  .brand{width:calc(var(--sbw) - 12px);flex:none}
+  .top-search{flex:0 1 460px;max-width:460px;margin-left:0;height:34px;background:#0c0e0f;border:1px solid #1d2022;border-radius:20px}
+  .top-actions{margin-left:auto;gap:8px}
+  .create-btn{border:1px solid #2a2e30;border-radius:18px;padding:6px 14px;font-size:13px;font-weight:600}
+  /* left column */
+  .sidebar{top:var(--tb);left:var(--cl);width:var(--sbw);padding:10px 6px 24px;background:#000;border-right:1px solid #1d2123}
+  .sidebar .nav-item[data-view=notifications],.sidebar .nav-item[data-view=music],.sidebar .nav-item[data-view=communities],.sidebar .nav-item[data-view=sports],.sidebar .nav-item[data-view=messages]{display:none}
+  .nav-item{height:36px;font-size:15px;padding:0 12px;border-radius:8px}
+  .nav-item.active{background:#1f2325}
+  /* middle column: 600px feed centred between the two dividers */
+  .main-content{margin-left:calc(var(--cl) + var(--sbw));margin-right:calc(var(--cl) + var(--rbw));padding:12px 0 60px;min-height:calc(100vh - var(--tb))}
+  .main-content>*{max-width:600px;margin-left:auto;margin-right:auto}
+  body[data-view=admin] .main-content>*{max-width:none}
+  body[data-view=home] .page-title,body[data-view=home] .block-heading,body[data-view=home] .arena-row{display:none}
+  .main-content>.stories-row,.main-content>.post-composer{padding-left:16px;padding-right:16px}
+  .post-composer{background:transparent;border:0;padding-top:6px;padding-bottom:10px}
+  .post-composer input#postText{height:36px;background:transparent;border:1px solid #23272a;border-radius:20px;padding:0 14px}
+  .feed-tabs{margin:4px 16px 8px}
+  .feed-post{background:transparent;border:0;border-bottom:1px solid #1c1f21;border-radius:0;margin:0;padding:14px 16px 8px}
+  .feed-post .media-wrap{border-radius:10px}
+  /* right column: flat sections separated by thin lines */
+  .rightbar{display:block;top:var(--tb);right:var(--cl);width:var(--rbw);padding:6px 12px 40px;background:#000;border-left:1px solid #1d2123;border-right:0}
+  .rb-card{background:transparent;border:0;border-bottom:1px solid #1c1f21;border-radius:0;padding:14px 2px 16px;margin:0}
+  .rb-card:last-child{border-bottom:0}
+  .rb-h{font-size:10px;letter-spacing:2px;color:#828a87;font-weight:800;margin-bottom:10px}
+  #miniPlayer{left:calc(var(--cl) + var(--sbw));right:calc(var(--cl) + var(--rbw))}
+}
+/* narrower desktops: drop the right column and keep the centred feed */
+@media(min-width:901px) and (max-width:1100px){
+  :root{--rbw:0px}
+  .rightbar{display:none!important}
+}
