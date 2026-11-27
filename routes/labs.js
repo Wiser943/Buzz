@@ -101,5 +101,49 @@ router.get('/:id', (req, res) => {
   res.json({ lab });
 });
 
+// POST /api/labs - add new lab
+router.post('/', (req, res) => {
+  const { title, category, description, concepts, difficulty, tag } = req.body || {};
+  if (!title || !description) return res.status(400).json({ error: 'Title and description required' });
+  const id = 'lab-' + Date.now();
+  const newLab = {
+    id,
+    slug: id,
+    title: title.trim(),
+    category: category || 'General Science',
+    icon: 'flask-conical',
+    tag: tag || 'Interactive Lab',
+    difficulty: difficulty || 'All Levels',
+    description: description.trim(),
+    concepts: Array.isArray(concepts) ? concepts : (concepts ? concepts.split(',').map(s=>s.trim()) : [])
+  };
+  LABS.push(newLab);
+  res.status(201).json({ success: true, lab: newLab });
+});
+
+// PATCH /api/labs/:id - update lab
+router.patch('/:id', (req, res) => {
+  const idx = LABS.findIndex(l => l.id === req.params.id || l.slug === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Lab not found' });
+  const b = req.body || {};
+  LABS[idx] = {
+    ...LABS[idx],
+    ...(b.title && { title: b.title.trim() }),
+    ...(b.category && { category: b.category.trim() }),
+    ...(b.description && { description: b.description.trim() }),
+    ...(b.difficulty && { difficulty: b.difficulty.trim() }),
+    ...(b.concepts && { concepts: Array.isArray(b.concepts) ? b.concepts : b.concepts.split(',').map(s=>s.trim()) })
+  };
+  res.json({ success: true, lab: LABS[idx] });
+});
+
+// DELETE /api/labs/:id - remove lab
+router.delete('/:id', (req, res) => {
+  const idx = LABS.findIndex(l => l.id === req.params.id || l.slug === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Lab not found' });
+  const removed = LABS.splice(idx, 1);
+  res.json({ success: true, deleted: removed[0].id });
+});
+
 module.exports = router;
 module.exports.LABS = LABS;

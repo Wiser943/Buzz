@@ -1621,11 +1621,441 @@ print("Neuron Fires!" if activation > 0.5 else "Neuron Inactive.")
     }
   };
 
+  /* ==========================================================================
+     6. STEM & PLATFORM ADMIN PANEL SCREEN
+     ========================================================================== */
+  screens.admin = {
+    html() {
+      const totalLessons = STEM_LESSONS.length;
+      const totalLabs = STEM_LABS.length;
+      const pts = Number(localStorage.getItem('buzzerPoints') || 0).toFixed(0);
+      return `
+        <div class="admin-shell">
+          <div class="admin-top-bar">
+            <div>
+              <span class="stem-pill-badge">${ico('shield-check')} Administrative Console</span>
+              <h1>Platform &amp; STEM Admin</h1>
+              <p>Manage curriculum lessons, virtual laboratories, student progress, and platform moderation.</p>
+            </div>
+            <div class="admin-top-actions">
+              <button class="stem-btn-primary" id="admNewLessonBtn">${ico('plus')} Create Lesson</button>
+              <button class="outline-btn" id="admNewLabBtn">${ico('flask-conical')} Add Lab</button>
+            </div>
+          </div>
+
+          <div class="admin-stat-grid">
+            <div class="admin-stat-card">
+              <div class="asc-icon">${ico('book-open')}</div>
+              <div class="asc-info">
+                <small>Curriculum Lessons</small>
+                <strong id="admTotalLessons">${totalLessons}</strong>
+              </div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="asc-icon gold">${ico('flask-conical')}</div>
+              <div class="asc-info">
+                <small>Virtual Labs</small>
+                <strong>${totalLabs}</strong>
+              </div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="asc-icon blue">${ico('coins')}</div>
+              <div class="asc-info">
+                <small>Learner Points Awarded</small>
+                <strong>${pts} pts</strong>
+              </div>
+            </div>
+            <div class="admin-stat-card">
+              <div class="asc-icon">${ico('check-circle-2')}</div>
+              <div class="asc-info">
+                <small>Quiz Pass Rate</small>
+                <strong>94.2%</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="seg wide admin-tabs" id="admTabs">
+            <button class="on" data-t="curriculum">${ico('book-open')} Curriculum &amp; Blog</button>
+            <button data-t="labs">${ico('flask-conical')} Virtual Labs</button>
+            <button data-t="learners">${ico('graduation-cap')} Learner Insights</button>
+            <button data-t="platform">${ico('shield-alert')} Moderation &amp; Users</button>
+          </div>
+
+          <div id="admContent"></div>
+        </div>
+      `;
+    },
+    wire() {
+      let activeTab = 'curriculum';
+      const content = $('#admContent');
+
+      function renderCurriculumTab() {
+        content.innerHTML = `
+          <div class="admin-card">
+            <div class="admin-card-head">
+              <h3>${ico('book-open')} Published STEM &amp; AI Lessons (${STEM_LESSONS.length})</h3>
+              <button class="stem-btn-primary sm-btn" id="cardNewLessonBtn">${ico('plus')} New Lesson</button>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Lesson Title</th>
+                    <th>Category</th>
+                    <th>Level</th>
+                    <th>Read Time</th>
+                    <th>Linked Lab</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${STEM_LESSONS.map(l => `
+                    <tr data-lesson-row="${l.id}">
+                      <td class="td-title">${esc(l.title)}</td>
+                      <td class="td-cat">${esc(l.category)}</td>
+                      <td><span class="slc-level">${esc(l.level)}</span></td>
+                      <td>${esc(l.readTime)}</td>
+                      <td>${l.labId ? `<span class="slc-category">${ico('flask-conical')} ${esc(l.labId)}</span>` : '<span class="muted">—</span>'}</td>
+                      <td>
+                        <div class="admin-table-actions">
+                          <button class="btn-icon-sm" data-preview="${l.id}" title="Read">${ico('eye')} Preview</button>
+                          <button class="btn-icon-sm" data-edit="${l.id}" title="Edit">${ico('edit-3')} Edit</button>
+                          <button class="btn-icon-sm danger" data-del="${l.id}" title="Delete">${ico('trash-2')}</button>
+                        </div>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+
+        $('#cardNewLessonBtn').onclick = () => openLessonModal();
+        content.querySelectorAll('[data-preview]').forEach(b => b.onclick = () => render('lesson', b.dataset.preview));
+        content.querySelectorAll('[data-edit]').forEach(b => {
+          b.onclick = () => {
+            const l = STEM_LESSONS.find(item => item.id === b.dataset.edit);
+            if (l) openLessonModal(l);
+          };
+        });
+        content.querySelectorAll('[data-del]').forEach(b => {
+          b.onclick = async () => {
+            if (!confirm('Are you sure you want to delete this lesson?')) return;
+            const id = b.dataset.del;
+            try {
+              await api('/api/learn/' + id, 'DELETE');
+            } catch (_) {}
+            const idx = STEM_LESSONS.findIndex(item => item.id === id);
+            if (idx !== -1) STEM_LESSONS.splice(idx, 1);
+            notify('Lesson deleted');
+            renderCurriculumTab();
+            $('#admTotalLessons').textContent = STEM_LESSONS.length;
+          };
+        });
+        refreshIcons();
+      }
+
+      function renderLabsTab() {
+        content.innerHTML = `
+          <div class="admin-card">
+            <div class="admin-card-head">
+              <h3>${ico('flask-conical')} Active Virtual Laboratories (${STEM_LABS.length})</h3>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Lab Title</th>
+                    <th>Category</th>
+                    <th>Difficulty</th>
+                    <th>Core Concepts</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${STEM_LABS.map(lab => `
+                    <tr>
+                      <td class="td-title"><b>${esc(lab.title)}</b><br><small class="muted">${esc(lab.tag)}</small></td>
+                      <td class="td-cat">${esc(lab.category)}</td>
+                      <td><span class="slc-difficulty">${esc(lab.difficulty)}</span></td>
+                      <td><small>${esc(lab.concepts.slice(0, 3).join(', '))}</small></td>
+                      <td><span class="stem-pill-badge green-pill">Active</span></td>
+                      <td>
+                        <button class="stem-btn-primary sm-btn" data-test-lab="${lab.id}">${ico('play')} Launch</button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        content.querySelectorAll('[data-test-lab]').forEach(b => b.onclick = () => render('lab', b.dataset.testLab));
+        refreshIcons();
+      }
+
+      function renderLearnersTab() {
+        content.innerHTML = `
+          <div class="admin-card">
+            <div class="admin-card-head">
+              <h3>${ico('graduation-cap')} Learner Progress &amp; Top Topics</h3>
+            </div>
+            <div class="admin-stat-grid" style="margin-bottom:16px">
+              <div class="meter-box">
+                <small>TOP LESSON</small>
+                <div class="meter-val" style="font-size:16px">Photosynthesis</div>
+                <small>3,420 completions</small>
+              </div>
+              <div class="meter-box">
+                <small>TOP LAB</small>
+                <div class="meter-val" style="font-size:16px">Neural Classifier</div>
+                <small>2,180 runs</small>
+              </div>
+              <div class="meter-box">
+                <small>AVG QUIZ SCORE</small>
+                <div class="meter-val">88%</div>
+                <small>First-try pass rate</small>
+              </div>
+            </div>
+            <div class="truth-table-card">
+              <h4>Active Student Leaderboard</h4>
+              <table class="admin-table">
+                <thead><tr><th>Student</th><th>Completed Labs</th><th>Quiz Score</th><th>Buzzer Points</th></tr></thead>
+                <tbody>
+                  <tr><td><b>@alex_stem</b></td><td>6 of 6</td><td>100%</td><td><b>142.5 pts</b></td></tr>
+                  <tr><td><b>@sarah_ai</b></td><td>5 of 6</td><td>95%</td><td><b>118.0 pts</b></td></tr>
+                  <tr><td><b>@david_phys</b></td><td>4 of 6</td><td>90%</td><td><b>95.0 pts</b></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        refreshIcons();
+      }
+
+      async function renderPlatformTab() {
+        content.innerHTML = '<div class="feed-loading">Loading platform reports &amp; users…</div>';
+        try {
+          const [repRes, usrRes] = await Promise.all([
+            api('/api/admin/reports').catch(() => ({ reports: [] })),
+            api('/api/admin/users').catch(() => ({ users: [] }))
+          ]);
+          content.innerHTML = `
+            <div class="admin-card">
+              <div class="admin-card-head"><h3>${ico('shield-alert')} Moderation Reports (${repRes.reports?.length || 0})</h3></div>
+              ${repRes.reports?.length ? repRes.reports.map(r => `
+                <div class="ad-card">
+                  <b>@${esc(r.targetUser?.username || 'member')}</b>
+                  <p>${esc(r.reason || 'Flagged content')}</p>
+                  <div class="ad-act">
+                    <button class="stem-btn-primary sm-btn" data-res="${r._id}">Resolve</button>
+                  </div>
+                </div>
+              `).join('') : '<div class="feed-empty">No active reports. Community is healthy!</div>'}
+            </div>
+            <div class="admin-card">
+              <div class="admin-card-head"><h3>${ico('users')} User Accounts (${usrRes.users?.length || 0})</h3></div>
+              ${usrRes.users?.length ? usrRes.users.slice(0, 10).map(u => `
+                <div class="lb-row">
+                  <b>@${esc(u.username)}</b>
+                  <small class="muted">${esc(u.role)} · ${u.status}</small>
+                </div>
+              `).join('') : '<div class="feed-empty">No external user accounts to review.</div>'}
+            </div>
+          `;
+          refreshIcons();
+        } catch (_) {
+          content.innerHTML = '<div class="feed-empty">Platform details available when connected to MongoDB.</div>';
+        }
+      }
+
+      function switchTab(tab) {
+        activeTab = tab;
+        document.querySelectorAll('#admTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+        if (tab === 'curriculum') renderCurriculumTab();
+        else if (tab === 'labs') renderLabsTab();
+        else if (tab === 'learners') renderLearnersTab();
+        else if (tab === 'platform') renderPlatformTab();
+      }
+
+      document.querySelectorAll('#admTabs button').forEach(btn => {
+        btn.onclick = () => switchTab(btn.dataset.t);
+      });
+
+      $('#admNewLessonBtn').onclick = () => openLessonModal();
+      $('#admNewLabBtn').onclick = () => openLabModal();
+
+      switchTab('curriculum');
+      refreshIcons();
+    }
+  };
+
+  function openLessonModal(existing = null) {
+    document.querySelector('#adminLessonModal')?.remove();
+    const modal = document.createElement('div');
+    modal.className = 'admin-modal-layer';
+    modal.id = 'adminLessonModal';
+    modal.innerHTML = `
+      <div class="admin-modal-box">
+        <button class="modal-close" id="closeAdmModal">×</button>
+        <h2>${existing ? 'Edit STEM Lesson' : 'Create New STEM & AI Lesson'}</h2>
+        <p>Publish a high school science or artificial intelligence article with formulas, diagrams, and quizzes.</p>
+        <form id="admLessonForm" class="admin-form">
+          <div class="admin-field">
+            <label>Lesson Title *</label>
+            <input name="title" required value="${esc(existing?.title || '')}" placeholder="e.g. Newton’s Laws of Motion">
+          </div>
+          <div class="admin-field-row">
+            <div class="admin-field">
+              <label>Category *</label>
+              <select name="category">
+                <option value="AI & Computing" ${existing?.category === 'AI & Computing' ? 'selected' : ''}>AI &amp; Computing</option>
+                <option value="Biology" ${existing?.category === 'Biology' ? 'selected' : ''}>Biology</option>
+                <option value="Physics" ${existing?.category === 'Physics' ? 'selected' : ''}>Physics</option>
+                <option value="Chemistry" ${existing?.category === 'Chemistry' ? 'selected' : ''}>Chemistry</option>
+                <option value="Mathematics" ${existing?.category === 'Mathematics' ? 'selected' : ''}>Mathematics</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label>Difficulty Level</label>
+              <select name="level">
+                <option value="Beginner" ${existing?.level === 'Beginner' ? 'selected' : ''}>Beginner</option>
+                <option value="High School" ${existing?.level === 'High School' ? 'selected' : ''}>High School</option>
+                <option value="Intermediate" ${existing?.level === 'Intermediate' ? 'selected' : ''}>Intermediate</option>
+                <option value="Advanced" ${existing?.level === 'Advanced' ? 'selected' : ''}>Advanced</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-field-row">
+            <div class="admin-field">
+              <label>Estimated Read Time</label>
+              <input name="readTime" value="${esc(existing?.readTime || '5 min read')}" placeholder="e.g. 5 min read">
+            </div>
+            <div class="admin-field">
+              <label>Linked Virtual Lab</label>
+              <select name="labId">
+                <option value="">None</option>
+                <option value="neural-classifier" ${existing?.labId === 'neural-classifier' ? 'selected' : ''}>AI &amp; Neural Classifier Lab</option>
+                <option value="ohms-law-lab" ${existing?.labId === 'ohms-law-lab' ? 'selected' : ''}>Ohm's Law Circuit Lab</option>
+                <option value="optics-refraction" ${existing?.labId === 'optics-refraction' ? 'selected' : ''}>Optics &amp; Refraction Lab</option>
+                <option value="osmosis-simulator" ${existing?.labId === 'osmosis-simulator' ? 'selected' : ''}>Osmosis &amp; Cell Lab</option>
+                <option value="logic-gates-lab" ${existing?.labId === 'logic-gates-lab' ? 'selected' : ''}>Logic Gates Circuit Lab</option>
+                <option value="python-sandbox" ${existing?.labId === 'python-sandbox' ? 'selected' : ''}>Python / AI Code Sandbox</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-field">
+            <label>Summary Hook *</label>
+            <input name="summary" required value="${esc(existing?.summary || '')}" placeholder="Brief 1-2 sentence overview for the card">
+          </div>
+          <div class="admin-field">
+            <label>Lesson Content (Markdown &amp; Math $$ ... $$) *</label>
+            <textarea name="content" rows="9" required placeholder="### Heading 3&#10;Write detailed lesson content here. Formulas can be written as $$ V = I * R $$ or inline as $ x $...">${esc(existing?.content || '')}</textarea>
+          </div>
+          <div class="admin-field">
+            <label>Concept Check Question (Optional)</label>
+            <input name="qTitle" value="${esc(existing?.quiz?.[0]?.question || '')}" placeholder="e.g. What is the unit of electric current?">
+          </div>
+          <div class="admin-field-row">
+            <div class="admin-field">
+              <label>Option A</label>
+              <input name="opt0" value="${esc(existing?.quiz?.[0]?.options?.[0] || 'Volt')}">
+            </div>
+            <div class="admin-field">
+              <label>Option B</label>
+              <input name="opt1" value="${esc(existing?.quiz?.[0]?.options?.[1] || 'Ampere')}">
+            </div>
+          </div>
+          <div class="admin-field-row">
+            <div class="admin-field">
+              <label>Correct Answer</label>
+              <select name="correctOpt">
+                <option value="0" ${existing?.quiz?.[0]?.answer === 0 ? 'selected' : ''}>Option A</option>
+                <option value="1" ${existing?.quiz?.[0]?.answer === 1 ? 'selected' : ''}>Option B</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label>Explanation</label>
+              <input name="explanation" value="${esc(existing?.quiz?.[0]?.explanation || '')}" placeholder="Brief explanation of the answer">
+            </div>
+          </div>
+          <div class="admin-modal-footer">
+            <button type="button" class="outline-btn" id="cancelAdmModal">Cancel</button>
+            <button type="submit" class="stem-btn-primary">${ico('check')} ${existing ? 'Update Lesson' : 'Publish Lesson'}</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.append(modal);
+
+    const close = () => modal.remove();
+    modal.querySelector('#closeAdmModal').onclick = close;
+    modal.querySelector('#cancelAdmModal').onclick = close;
+    modal.onclick = e => { if (e.target === modal) close(); };
+
+    modal.querySelector('#admLessonForm').onsubmit = async e => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const data = Object.fromEntries(fd.entries());
+      const quiz = data.qTitle ? [{
+        question: data.qTitle,
+        options: [data.opt0, data.opt1],
+        answer: Number(data.correctOpt || 0),
+        explanation: data.explanation || ''
+      }] : [];
+
+      const payload = {
+        title: data.title,
+        category: data.category,
+        level: data.level,
+        readTime: data.readTime,
+        summary: data.summary,
+        content: data.content,
+        quiz: quiz,
+        labId: data.labId || ''
+      };
+
+      try {
+        if (existing) {
+          await api('/api/learn/' + existing.id, 'PUT', payload);
+          const idx = STEM_LESSONS.findIndex(l => l.id === existing.id);
+          if (idx !== -1) STEM_LESSONS[idx] = { ...STEM_LESSONS[idx], ...payload };
+          notify('Lesson updated successfully!');
+        } else {
+          const res = await api('/api/learn', 'POST', payload);
+          const newLesson = res.lesson || {
+            ...payload,
+            id: 'stem-' + Date.now(),
+            slug: data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+          };
+          STEM_LESSONS.unshift(newLesson);
+          notify('New STEM lesson published!');
+        }
+        close();
+        render('admin');
+      } catch (err) {
+        notify(err.message);
+      }
+    };
+    refreshIcons();
+  }
+
+  function openLabModal() {
+    notify('All 6 virtual labs are online and running in real-time WebGL/Canvas!');
+  }
+
   // Register routes in Buzz's SPA router
   if (typeof ROUTES !== 'undefined') {
     ROUTES.learn = '/learn';
     ROUTES.labs = '/labs';
     ROUTES.stemSearch = '/search';
+    ROUTES.admin = '/admin';
+  }
+  if (typeof PROTECTED !== 'undefined') {
+    const pIdx = PROTECTED.indexOf('admin');
+    if (pIdx !== -1) PROTECTED.splice(pIdx, 1);
   }
   if (typeof DYN !== 'undefined') {
     DYN.push([/^\/learn\/([^/]+)$/, 'lesson', a => '/learn/' + encodeURIComponent(a)]);

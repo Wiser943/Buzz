@@ -310,5 +310,56 @@ router.get('/:id', (req, res) => {
   res.json({ lesson });
 });
 
+// POST /api/learn - Create new lesson
+router.post('/', (req, res) => {
+  const { title, category, level, readTime, summary, content, quiz, labId } = req.body || {};
+  if (!title || !category || !content) {
+    return res.status(400).json({ error: 'Title, category, and content are required.' });
+  }
+  const id = 'stem-' + Date.now();
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const newLesson = {
+    id,
+    slug,
+    title: title.trim(),
+    category: category.trim(),
+    level: level || 'All Levels',
+    readTime: readTime || '5 min read',
+    summary: summary || title.trim(),
+    content: content.trim(),
+    quiz: Array.isArray(quiz) ? quiz : [],
+    labId: labId || ''
+  };
+  LESSONS.unshift(newLesson);
+  res.status(201).json({ success: true, lesson: newLesson });
+});
+
+// PUT /api/learn/:id - Update lesson
+router.put('/:id', (req, res) => {
+  const idx = LESSONS.findIndex(l => l.id === req.params.id || l.slug === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Lesson not found' });
+  const b = req.body || {};
+  LESSONS[idx] = {
+    ...LESSONS[idx],
+    ...(b.title && { title: b.title.trim() }),
+    ...(b.category && { category: b.category.trim() }),
+    ...(b.level && { level: b.level.trim() }),
+    ...(b.readTime && { readTime: b.readTime.trim() }),
+    ...(b.summary && { summary: b.summary.trim() }),
+    ...(b.content && { content: b.content.trim() }),
+    ...(b.quiz && { quiz: b.quiz }),
+    ...(b.labId !== undefined && { labId: b.labId })
+  };
+  res.json({ success: true, lesson: LESSONS[idx] });
+});
+
+// DELETE /api/learn/:id - Delete lesson
+router.delete('/:id', (req, res) => {
+  const idx = LESSONS.findIndex(l => l.id === req.params.id || l.slug === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Lesson not found' });
+  const removed = LESSONS.splice(idx, 1);
+  res.json({ success: true, deleted: removed[0].id });
+});
+
 module.exports = router;
 module.exports.LESSONS = LESSONS;
