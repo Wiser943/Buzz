@@ -723,6 +723,10 @@ body[data-view=post] .sub-head .ph-name b{font-size:15px}body[data-view=post] .s
   background: transparent !important;
 }
 
+.sidebar .nav-item[data-view=admin], #adminNav {
+  display: flex !important;
+}
+
 body[data-view=learn] .main-content>*,
 body[data-view=labs] .main-content>*,
 body[data-view=lab] .main-content>*,

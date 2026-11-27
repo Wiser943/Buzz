@@ -2046,6 +2046,9 @@ print("Neuron Fires!" if activation > 0.5 else "Neuron Inactive.")
     notify('All 6 virtual labs are online and running in real-time WebGL/Canvas!');
   }
 
+  window.__adminHtml = screens.admin.html;
+  window.__adminWire = screens.admin.wire;
+
   // Register routes in Buzz's SPA router
   if (typeof ROUTES !== 'undefined') {
     ROUTES.learn = '/learn';
@@ -2060,6 +2063,11 @@ print("Neuron Fires!" if activation > 0.5 else "Neuron Inactive.")
   if (typeof DYN !== 'undefined') {
     DYN.push([/^\/learn\/([^/]+)$/, 'lesson', a => '/learn/' + encodeURIComponent(a)]);
     DYN.push([/^\/labs\/([^/]+)$/, 'lab', a => '/labs/' + encodeURIComponent(a)]);
+  }
+
+  // If page loaded on /admin or was accessed directly, ensure render
+  if (location.pathname === '/admin') {
+    setTimeout(() => { if (typeof render === 'function') render('admin'); }, 50);
   }
 
   // Hook into top search bar across the app
